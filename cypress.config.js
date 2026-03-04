@@ -22,6 +22,8 @@ module.exports = defineConfig({
       deviceName: process.env.CYPRESS_DEVICE_NAME || 'COM',
     },
     setupNodeEvents(on, config) {
+      // Register mochawesome plugin
+     require('cypress-mochawesome-reporter/plugin')(on);
 
       // Terminal Logging Task
       on('task', {
