@@ -1,9 +1,9 @@
 const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
-  reporter: 'cypress-multi-reporters',
+  reporter: 'cypress-multi-reporters',        // ← CHANGED
   reporterOptions: {
-    configFile: 'reporter-config.json',
+    configFile: 'reporter-config.json',        // ← CHANGED (all other options moved to reporter-config.json)
   },
 
   e2e: {
@@ -23,16 +23,7 @@ module.exports = defineConfig({
     },
     setupNodeEvents(on, config) {
       // Register mochawesome plugin
-     require('cypress-mochawesome-reporter/plugin')(on);
-
-      // Terminal Logging Task
-      on('task', {
-        log(message) {
-          console.log(`[gSender] ${message}`);
-          return null;
-        }
-      });
-
+      require('cypress-mochawesome-reporter/plugin')(on);
 
       on('before:browser:launch', (browser = {}, launchOptions) => {
         return launchOptions;
