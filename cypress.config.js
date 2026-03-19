@@ -1,9 +1,9 @@
 const { defineConfig } = require('cypress');
 
 module.exports = defineConfig({
-  reporter: 'cypress-multi-reporters',        // ← CHANGED
+  reporter: 'cypress-multi-reporters',
   reporterOptions: {
-    configFile: 'reporter-config.json',        // ← CHANGED (all other options moved to reporter-config.json)
+    configFile: 'reporter-config.json',
   },
 
   e2e: {
@@ -22,7 +22,16 @@ module.exports = defineConfig({
       deviceName: process.env.CYPRESS_DEVICE_NAME || 'COM',
     },
     setupNodeEvents(on, config) {
-  
+
+      // Terminal Logging Task
+      on('task', {
+        log(message) {
+          console.log(`[gSender] ${message}`);
+          return null;
+        }
+      });
+
+
       on('before:browser:launch', (browser = {}, launchOptions) => {
         return launchOptions;
       });
