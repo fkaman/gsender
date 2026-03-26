@@ -2231,6 +2231,29 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         options: ['Slider', 'Number'],
                         defaultValue: 'Slider',
                     },
+                    {
+                        label: 'App display scale',
+                        key: 'workspace.accessibility.displayScaleFactor',
+                        type: 'number',
+                        min: 0,
+                        max: 5,
+                        description:
+                            "Override the app's display scale independently of Windows DPI settings. Set to 0 (or leave blank) to follow system scaling. Valid range: 0 - 5. (Requires a restart to take effect)",
+                        hidden: () => !isElectron(),
+                        onUpdate: () => {
+                            if (isElectron()) {
+                                const scaleFactor = store.get(
+                                    'workspace.accessibility.displayScaleFactor',
+                                    0,
+                                );
+                                // @ts-ignore
+                                window.ipcRenderer.send(
+                                    'save-display-scale',
+                                    scaleFactor,
+                                );
+                            }
+                        },
+                    },
                 ],
             },
             {
