@@ -195,7 +195,7 @@ const defaultState: State = {
                 showVisually: false,
             },
             showKeyboardMap: false,
-            displayScaleFactor: 0,
+            displayScaleFactor: '100%',
         },
         preventJoggingPastLimits: false,
     },
