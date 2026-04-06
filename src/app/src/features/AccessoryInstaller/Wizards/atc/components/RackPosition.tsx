@@ -101,7 +101,7 @@ export function RackPosition({ onComplete, onUncomplete }: StepProps) {
         <div className="flex flex-col gap-5 justify-start">
             <div>
                 <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Finding Rack Position Method
+                    Find Rack Position Method
                 </label>
                 <select
                     value={rackPositionMethod}
