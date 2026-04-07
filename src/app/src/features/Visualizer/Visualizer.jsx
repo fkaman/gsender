@@ -2081,6 +2081,11 @@ class Visualizer extends Component {
     // Called when entering lite mode to free GPU memory while keeping the renderer alive.
     // Geometries/materials are re-created on the next reloadGCode/reparseGCode call.
     disposeGeometries() {
+        // Reset pivot internal state to (0,0,0) so that on rebuild, pivotPoint.set(center)
+        // produces the correct delta to re-center fresh children. Without this, the pivot
+        // retains the old center value and the delta becomes zero on reload.
+        this.pivotPoint.clear();
+
         this.animationLoopRunning = false;
 
         if (this.scene) {
@@ -2108,6 +2113,185 @@ class Visualizer extends Component {
         this.cuttingTool = null;
         this.laserPointer = null;
         this.cuttingPointer = null;
+    }
+
+    // Rebuilds all static scene contents (lights, grids, tools, limits) after disposeGeometries()
+    // without recreating the renderer, camera, or controls. Ends with reloadGCode() to restore toolpath.
+    rebuildSceneContents() {
+        if (!this.scene || !this.renderer) {
+            console.warn('Visualizer: rebuildSceneContents called before scene/renderer ready');
+            return;
+        }
+
+        const { state, isConnected } = this.props;
+        const { units, objects, currentTheme, liteMode } = state;
+        const isLaser = isLaserMode();
+
+        // Clear zombie children left in the group after disposeGeometries()
+        while (this.group.children.length > 0) {
+            this.group.remove(this.group.children[0]);
+        }
+
+        {
+            // Directional Light
+            const color = 0xffffff;
+            const intensity = 1;
+            let light;
+
+            light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(-1, -1, 1);
+            this.scene.add(light);
+
+            light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(1, -1, 1);
+            this.scene.add(light);
+        }
+
+        {
+            // Ambient Light
+            const light = new THREE.AmbientLight(colornames('gray 25'));
+            this.scene.add(light);
+        }
+
+        {
+            // Imperial Coordinate System
+            const visible = objects.coordinateSystem.visible;
+            const imperialCoordinateSystem = this.createCoordinateSystem(IMPERIAL_UNITS);
+            imperialCoordinateSystem.name = 'ImperialCoordinateSystem';
+            imperialCoordinateSystem.visible = visible && units === IMPERIAL_UNITS;
+            this.group.add(imperialCoordinateSystem);
+        }
+
+        {
+            // Metric Coordinate System
+            const visible = objects.coordinateSystem.visible;
+            const metricCoordinateSystem = this.createCoordinateSystem(METRIC_UNITS);
+            metricCoordinateSystem.name = 'MetricCoordinateSystem';
+            metricCoordinateSystem.visible = visible && units === METRIC_UNITS;
+            this.group.add(metricCoordinateSystem);
+        }
+
+        {
+            // Imperial Grid Line Numbers
+            const visible = objects.gridLineNumbers.visible;
+            const imperialGridLineNumbers = this.createGridLineNumbers(IMPERIAL_UNITS);
+            imperialGridLineNumbers.name = 'ImperialGridLineNumbers';
+            imperialGridLineNumbers.visible = visible && units === IMPERIAL_UNITS;
+            this.group.add(imperialGridLineNumbers);
+        }
+
+        {
+            // Metric Grid Line Numbers
+            const visible = objects.gridLineNumbers.visible;
+            const metricGridLineNumbers = this.createGridLineNumbers(METRIC_UNITS);
+            metricGridLineNumbers.name = 'MetricGridLineNumbers';
+            metricGridLineNumbers.visible = visible && units === METRIC_UNITS;
+            this.group.add(metricGridLineNumbers);
+        }
+
+        {
+            // Cutting Tool (async STL load)
+            Promise.all([
+                loadSTL('assets/models/stl/bit.stl').then((geometry) => geometry),
+                loadTexture('assets/textures/brushed-steel-texture.jpg').then((texture) => texture),
+            ])
+                .then((result) => {
+                    const [geometry, texture] = result;
+
+                    geometry.rotateX(-Math.PI / 2);
+                    geometry.scale(0.5, 0.5, 0.5);
+                    geometry.computeBoundingBox();
+                    geometry.translate(0, 0, -geometry.boundingBox.min.z);
+
+                    let material = new THREE.MeshLambertMaterial({
+                        map: texture,
+                        opacity: 0.9,
+                        transparent: false,
+                        emissive: 0xcccccc,
+                        emissiveIntensity: 0.5,
+                        color: '#caf0f8',
+                    });
+
+                    if (geometry.hasColors) {
+                        material.vertexColors = true;
+                    }
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    const object = new THREE.Object3D();
+                    object.add(mesh);
+
+                    this.group.remove(this.cuttingTool);
+
+                    this.cuttingTool = object;
+                    this.cuttingTool.name = 'CuttingTool';
+                    this.cuttingTool.visible =
+                        this.props.isConnected &&
+                        !isLaserMode() &&
+                        (liteMode
+                            ? state.objects.cuttingTool.visibleLite
+                            : state.objects.cuttingTool.visible);
+
+                    this.group.add(this.cuttingTool);
+
+                    if (this.props.isConnected) {
+                        this.workPosition = this.props.workPosition;
+                        this.machinePosition = this.props.machinePosition;
+                        this.updateCuttingToolPosition(this.props.workPosition);
+                    }
+
+                    this.updateScene();
+                })
+                .catch((error) => {
+                    console.error('Visualizer: Failed to load cutting tool assets during rebuild:', error);
+                });
+        }
+
+        {
+            // Laser Tool — skip setupScene() since EffectComposers are still valid
+            this.group.remove(this.laserPointer);
+
+            this.laserPointer = new LaserPointer({
+                color: currentTheme.get(CUTTING_PART),
+                diameter: 4,
+            });
+            this.laserPointer.name = 'LaserPointer';
+            this.laserPointer.visible =
+                isConnected &&
+                isLaser &&
+                (liteMode
+                    ? state.objects.cuttingTool.visibleLite
+                    : state.objects.cuttingTool.visible);
+
+            this.group.add(this.laserPointer);
+        }
+
+        {
+            // Cutting Pointer
+            this.createCuttingPointer();
+        }
+
+        {
+            // Limits
+            const limits = _get(this.machineProfile, 'limits');
+            const {
+                xmin = 0,
+                xmax = 0,
+                ymin = 0,
+                ymax = 0,
+                zmin = 0,
+                zmax = 0,
+            } = { ...limits };
+            this.limits = this.createLimits(xmin, xmax, ymin, ymax, zmin, zmax);
+            this.limits.name = 'Limits';
+            this.limits.visible = objects.limits.visible;
+            this.updateLimitsPosition();
+        }
+
+        this.scene.add(this.group);
+
+        this.startAnimationLoop();
+        this.updateScene({ forceUpdate: true });
+        this.reloadGCode();
     }
 
     createCombinedCamera(width, height) {
