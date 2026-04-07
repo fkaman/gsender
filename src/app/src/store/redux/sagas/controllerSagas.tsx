@@ -553,11 +553,11 @@ export function* initialize(): Generator<any, void, any> {
 
     controller.addListener(
         'serialport:close',
-        (options: SerialPortOptions, _received: number) => {
+        (_options: SerialPortOptions, _received: number) => {
             reduxStore.dispatch(clearSpindles());
             // Reset homing run flag to prevent rapid position without running homing
             reduxStore.dispatch(resetHoming());
-            reduxStore.dispatch(closeConnection({ port: options.port }));
+            reduxStore.dispatch(closeConnection());
 
             pubsub.publish('machine:disconnected');
         },

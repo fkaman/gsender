@@ -1329,9 +1329,10 @@ class GrblHalController {
 
     async initController(semver) {
         // Send \x87 as a raw realtime byte
-        if (this.connection) {
+        // Moved this into connect again - don't need to send twice
+        /*if (this.connection) {
             this.connection.write(Buffer.from([0x87]));
-        }
+        }*/
 
         await delay(500);
         const hasSD = _.get(this.state, 'status.sdCard', null);
