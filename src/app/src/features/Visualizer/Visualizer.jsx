@@ -102,6 +102,7 @@ const CAMERA_DISTANCE = 1900; // Move the camera out a bit from the origin (0, 0
 const TRACKBALL_CONTROLS_MIN_DISTANCE = 1;
 const TRACKBALL_CONTROLS_MAX_DISTANCE = 7000;
 import { outlineResponse } from '../../workers/Outline.response';
+import { shouldVisualizeSVG } from '../../workers/Visualize.response';
 import { uploadGcodeFileToServer } from 'app/lib/fileupload';
 import { toast } from 'app/lib/toaster';
 import { getZUpTravel } from 'app/lib/SoftLimits.js';
@@ -2765,6 +2766,16 @@ class Visualizer extends Component {
     }
 
     load(name, vizualization, callback) {
+        // When in SVG lite mode, the 3D Visualizer is hidden with a cleared scene.
+        // Returning early here prevents creating a GCodeVisualizer and calling
+        // pivotPoint.set(center), which would corrupt the pivot state for the
+        // next full-3D restore. The SVGVisualizer handles this file:load independently.
+        if (shouldVisualizeSVG()) {
+            const { setVisualizerReady } = this.props.actions;
+            setVisualizerReady();
+            return;
+        }
+
         // Remove previous G-code object
         this.unload();
         const { currentTheme, disabled, disabledLite, liteMode } =
@@ -2823,6 +2834,7 @@ class Visualizer extends Component {
             'widgets.visualizer.hideProcessedLines',
             false,
         );
+
         this.visualizer.setHideProcessedLines(hideProcessedLines);
 
         const shouldRenderVisualization = liteMode ? !disabledLite : !disabled;
