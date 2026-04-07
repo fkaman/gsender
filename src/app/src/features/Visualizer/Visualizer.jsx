@@ -2124,6 +2124,10 @@ class Visualizer extends Component {
             return;
         }
 
+        // Resize renderer now that the container is visible again (was display:none in lite mode).
+        // componentDidUpdate runs after the DOM update, so the container has correct dimensions.
+        this.resizeRenderer();
+
         const { state, isConnected } = this.props;
         const { units, objects, currentTheme, liteMode } = state;
         const isLaser = isLaserMode();
