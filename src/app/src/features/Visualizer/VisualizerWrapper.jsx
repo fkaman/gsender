@@ -55,13 +55,25 @@ class VisualizerWrapper extends Component {
     }
 
     componentDidUpdate() {
-        // force refresh, changing which visualizer component is being used
-        if (this.state.needRefresh && shouldVisualize()) {
-            this.visualizer.reloadGCode();
+        const inSVGMode = shouldVisualizeSVG();
+        const inFullMode = shouldVisualize(); // false in any lite mode
+
+        if (this.state.needRefresh) {
+            if (inFullMode && this.threeVisualizer) {
+                // Rebuild entire scene (lights, grids, tools, limits) then reload GCode.
+                // Uses threeVisualizer directly because SVGVisualizer's unmount ref cleanup
+                // fires after the 3D ref update, leaving this.visualizer null by now.
+                this.threeVisualizer.rebuildSceneContents();
+            } else if (inSVGMode && this.visualizer) {
+                this.visualizer.reloadGCode();
+            }
             this.setNeedRefresh(false);
-            // a step further than refresh, reparsing the gcode as well
         } else if (this.state.needReload) {
-            this.visualizer.reparseGCode();
+            if (inFullMode && this.threeVisualizer) {
+                this.threeVisualizer.reparseGCode();
+            } else if (this.visualizer) {
+                this.visualizer.reparseGCode();
+            }
             this.setNeedReload(false);
         }
     }
@@ -89,7 +101,7 @@ class VisualizerWrapper extends Component {
                 if (nowInLiteMode && this.threeVisualizer) {
                     this.threeVisualizer.disposeGeometries();
                 }
-                if (isFileLoaded && !nowInLiteMode) {
+                if (isFileLoaded) {
                     this.setNeedRefresh(true);
                 }
                 this.forceUpdate();
