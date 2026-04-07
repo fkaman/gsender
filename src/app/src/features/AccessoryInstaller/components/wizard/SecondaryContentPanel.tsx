@@ -42,10 +42,8 @@ export function SecondaryContentPanel({ content }: SecondaryContentPanelProps) {
             : 'flex-shrink-0 portrait:flex-1 portrait:min-w-0 portrait:overflow-hidden';
 
         if (item.type === 'image') {
-            const multiItem = mainContent.length > 1;
-            const imageContainerClass = multiItem
-                ? 'flex-1 min-h-0 overflow-hidden portrait:min-w-0 portrait:h-full'
-                : containerClassName;
+            const imageContainerClass =
+                'flex flex-col flex-1 min-h-0 overflow-hidden portrait:min-w-0 portrait:h-full';
             return (
                 <div key={index} className={imageContainerClass}>
                     {item.title && (
@@ -53,11 +51,13 @@ export function SecondaryContentPanel({ content }: SecondaryContentPanelProps) {
                             {item.title}
                         </h3>
                     )}
-                    <img
-                        src={item.content as string}
-                        alt={item.title || 'Secondary content'}
-                        className={`w-full rounded-xl ${multiItem ? ' h-full object-contain' : ''}`}
-                    />
+                    <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
+                        <img
+                            src={item.content as string}
+                            alt={item.title || 'Secondary content'}
+                            className="max-h-full max-w-full rounded-xl"
+                        />
+                    </div>
                 </div>
             );
         }
