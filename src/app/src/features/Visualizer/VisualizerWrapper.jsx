@@ -56,7 +56,8 @@ class VisualizerWrapper extends Component {
 
     componentDidUpdate() {
         const inSVGMode = shouldVisualizeSVG();
-        const inFullMode = shouldVisualize(); // false in any lite mode
+        // shouldVisualize() returns true for SVG/Light mode too, so explicitly exclude it
+        const inFullMode = shouldVisualize() && !inSVGMode;
 
         if (this.state.needRefresh) {
             if (inFullMode && this.threeVisualizer) {
