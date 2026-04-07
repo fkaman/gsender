@@ -1839,7 +1839,9 @@ class Visualizer extends Component {
                         if (this.props.isConnected) {
                             this.workPosition = this.props.workPosition;
                             this.machinePosition = this.props.machinePosition;
-                            this.updateCuttingToolPosition(this.props.workPosition);
+                            this.updateCuttingToolPosition(
+                                this.props.workPosition,
+                            );
                         }
 
                         // Update the scene
@@ -2866,6 +2868,7 @@ class Visualizer extends Component {
             return;
         }
 
+        this.props.actions.camera.toFreeView();
         this.controls.zoomIn(delta);
         this.controls.update();
 
@@ -2879,6 +2882,7 @@ class Visualizer extends Component {
             return;
         }
 
+        this.props.actions.camera.toFreeView();
         this.controls.zoomOut(delta);
         this.controls.update();
 
@@ -2898,6 +2902,7 @@ class Visualizer extends Component {
         pan.copy(eye).cross(objectUp.clone()).setLength(deltaX);
         pan.add(objectUp.clone().setLength(deltaY));
 
+        this.props.actions.camera.toFreeView();
         this.controls.object.position.add(pan);
         this.controls.target.add(pan);
         this.controls.update();
@@ -2906,21 +2911,25 @@ class Visualizer extends Component {
     // http://stackoverflow.com/questions/18581225/orbitcontrol-or-trackballcontrol
     panUp() {
         const { noPan, panSpeed } = this.controls;
+        this.props.actions.camera.toFreeView();
         !noPan && this.pan(0, 1 * panSpeed);
     }
 
     panDown() {
         const { noPan, panSpeed } = this.controls;
+        this.props.actions.camera.toFreeView();
         !noPan && this.pan(0, -1 * panSpeed);
     }
 
     panLeft() {
         const { noPan, panSpeed } = this.controls;
+        this.props.actions.camera.toFreeView();
         !noPan && this.pan(1 * panSpeed, 0);
     }
 
     panRight() {
         const { noPan, panSpeed } = this.controls;
+        this.props.actions.camera.toFreeView();
         !noPan && this.pan(-1 * panSpeed, 0);
     }
 
