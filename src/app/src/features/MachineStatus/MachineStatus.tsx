@@ -50,6 +50,7 @@ interface MachineStatusProps {
     alarmCode: ALARM_CODE;
     activeState: GRBL_ACTIVE_STATES_T;
     isConnected: boolean;
+    port: string | null;
 }
 
 interface Message {
@@ -65,7 +66,9 @@ const MachineStatus: React.FC<MachineStatusProps> = ({
     activeState,
     alarmCode,
     isConnected,
+    port,
 }) => {
+    const isPortOpen = isConnected || !!port;
     const unlock = (): void => {
         if (activeState === GRBL_ACTIVE_STATE_ALARM) {
             if (
@@ -121,32 +124,32 @@ const MachineStatus: React.FC<MachineStatusProps> = ({
                         'transition-colors duration-100 ease-in-out flex max-sm:w-40 max-sm:text-normal w-72 h-[60px] justify-between items-center [clip-path:_polygon(0%_0%,_100%_0%,_85%_100%,_15%_100%)]',
                         {
                             'text-white bg-gray-800':
-                                !isConnected || !activeState,
+                                !isPortOpen || !activeState,
                             'bg-gray-500 text-white':
                                 activeState === GRBL_ACTIVE_STATE_IDLE &&
-                                isConnected,
+                                isPortOpen,
                             'bg-green-600 text-white':
-                                isConnected &&
+                                isPortOpen &&
                                 (activeState === GRBL_ACTIVE_STATE_RUN ||
                                     activeState === GRBL_ACTIVE_STATE_JOG ||
                                     activeState === GRBL_ACTIVE_STATE_CHECK),
                             'bg-blue-500 text-white':
                                 activeState === GRBL_ACTIVE_STATE_HOME &&
-                                isConnected,
+                                isPortOpen,
                             'bg-yellow-600 text-white':
                                 (activeState === GRBL_ACTIVE_STATE_HOLD ||
                                     activeState === GRBL_ACTIVE_STATE_DOOR) &&
-                                isConnected,
+                                isPortOpen,
                             'bg-red-500 text-white':
                                 activeState === GRBL_ACTIVE_STATE_ALARM &&
-                                isConnected,
+                                isPortOpen,
                             'bg-purple-600 text-white':
                                 activeState === GRBL_ACTIVE_STATE_TOOL &&
-                                isConnected,
+                                isPortOpen,
                         },
                     )}
                 >
-                    {isConnected && activeState ? (
+                    {isPortOpen && activeState ? (
                         <>
                             {activeState === GRBL_ACTIVE_STATE_ALARM ? (
                                 <div className="flex w-full flex-row justify-center align-middle items-center font-light sm:text-base text-3xl mb-1">
@@ -176,7 +179,7 @@ const MachineStatus: React.FC<MachineStatusProps> = ({
                     )}
                 </div>
                 <div className="mt-4 z-50">
-                    {isConnected && activeState === GRBL_ACTIVE_STATE_ALARM && (
+                    {isPortOpen && activeState === GRBL_ACTIVE_STATE_ALARM && (
                         <UnlockButton
                             onClick={unlock}
                             alarmCode={alarmCode}
@@ -206,10 +209,12 @@ export default connect((store) => {
         GRBL_ACTIVE_STATE_IDLE,
     );
     const isConnected = get(store, 'connection.isConnected', false);
+    const port = get(store, 'connection.port', null);
     return {
         $22,
         alarmCode,
         activeState,
         isConnected,
+        port,
     };
 })(MachineStatus);

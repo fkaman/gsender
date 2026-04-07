@@ -699,6 +699,11 @@ class GrblHalController {
         });
 
         this.runner.on('status', (res) => {
+            // Allow status polling to start as soon as any status arrives (e.g. from 0x87 in Hold state)
+            if (!this.ready) {
+                this.ready = true;
+            }
+
             // Make sure we also have axs parsed - at most two times or we get endless loop
             if (!this.runner.hasAXS() && res.activeState === GRBL_HAL_ACTIVE_STATE_IDLE && this.actionMask.axsReportCount < 2) {
                 this.writeln('$I');
@@ -1566,9 +1571,12 @@ class GrblHalController {
         // Clear action values
         this.clearActionValues();
 
-        // Send $I to query firmware version; the startup event handler will take it from here
+        // Send $I to query firmware version; the startup event handler will take it from here.
+        // Also send 0x87 before $I as a raw realtime byte — this bypasses Hold state restrictions
+        // and triggers a status response that sets this.ready and populates activeState in the UI.
         setTimeout(() => {
             if (this.connection) {
+                this.connection.write(Buffer.from([0x87]));
                 this.write('$I\n');
             }
         }, 500);
