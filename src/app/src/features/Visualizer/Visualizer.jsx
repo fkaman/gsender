@@ -290,9 +290,10 @@ class Visualizer extends Component {
     }
 
     addStoreEvents() {
-        store.on('_dimensions', () => {
+        this._dimensionsHandler = () => {
             this.changeMachineProfile();
-        });
+        };
+        store.on('_dimensions', this._dimensionsHandler);
     }
 
     componentDidMount() {
@@ -694,6 +695,12 @@ class Visualizer extends Component {
         this.animationLoopRunning = false;
         this.isAgitated = false;
 
+        // Remove store _dimensions listener
+        if (this._dimensionsHandler) {
+            store.removeListener('_dimensions', this._dimensionsHandler);
+            this._dimensionsHandler = null;
+        }
+
         // Clean up WebGL context handlers
         if (this.contextLostHandler) {
             window.removeEventListener(
@@ -708,6 +715,16 @@ class Visualizer extends Component {
                 this.contextRestoredHandler,
                 false,
             );
+        }
+
+        // Dispose post-processing composers and renderer
+        // (defensive cleanup — normally the component stays mounted via display:none)
+        [this.copyComposer, this.fxaaComposer, this.bloomComposer, this.finalComposer].forEach((composer) => {
+            if (composer) composer.dispose();
+        });
+        if (this.renderer) {
+            this.renderer.dispose();
+            this.renderer = null;
         }
     }
 
@@ -2059,6 +2076,38 @@ class Visualizer extends Component {
 
         // Update the scene
         this.updateScene();
+    }
+
+    // Called when entering lite mode to free GPU memory while keeping the renderer alive.
+    // Geometries/materials are re-created on the next reloadGCode/reparseGCode call.
+    disposeGeometries() {
+        this.animationLoopRunning = false;
+
+        if (this.scene) {
+            this.scene.traverse((obj) => {
+                if (obj.geometry) {
+                    obj.geometry.dispose();
+                }
+                if (obj.material) {
+                    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    mats.forEach((m) => {
+                        if (m.map) m.map.dispose();
+                        m.dispose();
+                    });
+                }
+            });
+            while (this.scene.children.length > 0) {
+                this.scene.remove(this.scene.children[0]);
+            }
+        }
+
+        // Null out object refs so they are recreated on next scene setup
+        this.coordinateAxes = null;
+        this.limits = null;
+        this.visualizer = null;
+        this.cuttingTool = null;
+        this.laserPointer = null;
+        this.cuttingPointer = null;
     }
 
     createCombinedCamera(width, height) {

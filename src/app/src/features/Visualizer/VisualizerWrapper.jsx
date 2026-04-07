@@ -44,8 +44,14 @@ class VisualizerWrapper extends Component {
 
     visualizer = null;
 
+    threeVisualizer = null;
+
     componentDidMount() {
         this.subscribe();
+    }
+
+    componentWillUnmount() {
+        this.unsubscribe();
     }
 
     componentDidUpdate() {
@@ -79,12 +85,14 @@ class VisualizerWrapper extends Component {
     subscribe() {
         const tokens = [
             pubsub.subscribe('litemode:change', (msg, isFileLoaded) => {
-                if (isFileLoaded) {
-                    this.setNeedRefresh(true);
-                    this.forceUpdate();
-                } else {
-                    this.forceUpdate();
+                const nowInLiteMode = shouldVisualizeSVG() || !shouldVisualize();
+                if (nowInLiteMode && this.threeVisualizer) {
+                    this.threeVisualizer.disposeGeometries();
                 }
+                if (isFileLoaded && !nowInLiteMode) {
+                    this.setNeedRefresh(true);
+                }
+                this.forceUpdate();
             }),
             // currently, changing the settings requires reparsing of the gcode
             pubsub.subscribe('visualizer:settings', () => {
@@ -114,13 +122,18 @@ class VisualizerWrapper extends Component {
         let renderSVG = shouldVisualizeSVG();
         let renderAny = shouldVisualize() && !renderSVG;
 
+        const show3D = isSecondary || renderAny;
+
         return (
             <>
-                {(isSecondary || renderAny) && (
+                {/* Keep Visualizer always mounted to avoid WebGL renderer recreation on each toggle.
+                    Hide with CSS when not active so the renderer instance is preserved. */}
+                <div style={{ display: show3D ? '' : 'none' }}>
                     <Visualizer
-                        show={show}
+                        show={show && show3D}
                         cameraPosition={cameraPosition}
                         ref={(visualizerRef) => {
+                            this.threeVisualizer = visualizerRef;
                             this.visualizer = visualizerRef;
                         }}
                         state={state}
@@ -128,7 +141,7 @@ class VisualizerWrapper extends Component {
                         containerID={containerID}
                         isSecondary={isSecondary}
                     />
-                )}
+                </div>
                 {!isSecondary && renderSVG && (
                     <SVGVisualizer
                         show={show}

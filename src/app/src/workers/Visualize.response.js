@@ -213,13 +213,8 @@ export const visualizeResponse = async ({ data }) => {
 
 export const shouldVisualize = () => {
     const liteMode = store.get('widgets.visualizer.liteMode', false);
-    const isDisabled = liteMode
-        ? store.get(
-              'widgets.visualizer.liteOption',
-              LIGHTWEIGHT_OPTIONS.LIGHT,
-          ) === LIGHTWEIGHT_OPTIONS.EVERYTHING
-        : store.get('widgets.visualizer.disabled');
-    return !isDisabled;
+    if (liteMode) return false; // Skip 3D parse entirely in any lite mode variant
+    return !store.get('widgets.visualizer.disabled');
 };
 
 export const shouldVisualizeSVG = () => {
