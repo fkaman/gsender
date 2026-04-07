@@ -98,45 +98,43 @@ export function SecondaryContentPanel({ content }: SecondaryContentPanelProps) {
     };
 
     return (
-        <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-2 h-full">
             {mainContent.length > 0 && (
-                <div className="flex flex-col portrait:flex-row portrait:items-center gap-6 flex-1 min-h-0 overflow-hidden portrait:min-w-0">
+                <div className="flex flex-col portrait:flex-row portrait:items-center gap-2 flex-1 min-h-0 overflow-hidden portrait:min-w-0">
                     {mainContent.map((item, index) => renderItem(item, index))}
                 </div>
             )}
 
             {linkItem && (
-                <div className="flex-shrink-0 mt-auto">
-                    <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-                        <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-auto pt-2">
+                    <div className="bg-white rounded-lg border border-gray-200 px-3 py-2 shadow-sm">
+                        <div className="flex items-center gap-2">
                             <ExternalLink
-                                className="text-blue-500 flex-shrink-0 mt-0.5"
-                                size={18}
+                                className="text-blue-500 flex-shrink-0"
+                                size={16}
                             />
-                            <div className="flex-1 min-w-0">
+                            <span className="flex-1 text-sm text-gray-700">
                                 {linkItem.title && (
-                                    <div className="font-semibold text-gray-900 text-sm mb-1">
-                                        {linkItem.title}
-                                    </div>
+                                    <span className="font-semibold text-gray-900">
+                                        {linkItem.title}{' '}
+                                    </span>
                                 )}
-                                <div className="text-xs text-gray-600">
-                                    {linkItem.url ? (
-                                        <>
-                                            {linkItem.content as string}{' '}
-                                            <a
-                                                href={linkItem.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-700 hover:underline"
-                                            >
-                                                online resources
-                                            </a>
-                                        </>
-                                    ) : (
-                                        linkItem.content as string
-                                    )}
-                                </div>
-                            </div>
+                                {linkItem.url ? (
+                                    <>
+                                        {linkItem.content as string}{' '}
+                                        <a
+                                            href={linkItem.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-700 hover:underline"
+                                        >
+                                            online resources
+                                        </a>
+                                    </>
+                                ) : (
+                                    linkItem.content as string
+                                )}
+                            </span>
                             {linkItem.url && (
                                 <Popover>
                                     <PopoverTrigger asChild>

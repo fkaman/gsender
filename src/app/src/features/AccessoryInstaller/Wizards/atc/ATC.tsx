@@ -55,6 +55,33 @@ export function useSienciATCWizard(): Wizard {
                     completionImage: CompletionImg,
                     steps: [
                         {
+                            id: 'rack-position',
+                            title: 'Rack Position',
+                            component: RackPosition,
+                            autoComplete: () =>
+                                store.get('widgets.atc.templates.variables._tc_rack_enable.value', 0) === 0 &&
+                                store.get('widgets.atc.templates.variables._tc_slots.value', 0) === 0,
+                            secondaryContent: [
+                                {
+                                    type: 'image',
+                                    content: RackA,
+                                },
+                                {
+                                    type: 'component',
+                                    content: Jogging,
+                                    props: {
+                                        hideRotary: true,
+                                    },
+                                },
+                                {
+                                    type: 'link',
+                                    title: 'Need help?',
+                                    content: "Follow along in our",
+                                    url: 'https://resources.sienci.com/view/atc-software/'
+                                }
+                            ],
+                        },
+                        {
                             id: 'macro-configuration',
                             title: 'Tool Changing Macros',
                             component: MacroConfiguration,
