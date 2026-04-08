@@ -42,7 +42,7 @@ describe('Device Connection', () => {
         .should('exist')
         .within(() => {
 
-          // Step 3: Get all port buttons (button.m-0 confirmed from recording)
+          // Step 3: Get all port buttons 
           cy.get('button.m-0')
             .should('have.length.greaterThan', 0)
             .then(($buttons) => {

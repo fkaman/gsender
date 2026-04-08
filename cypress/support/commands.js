@@ -35,45 +35,18 @@
 //=======//
 Cypress.Commands.add('loadUI', (options = {}) => {
   const {
-    timeout = 20000,
-    viewport = { width: 1920, height: 1080 }
+    viewport = [1920, 1080],
+    visitTimeout = 30000,
+    elementTimeout = 15000,
+    expectedTitle = 'gSender 1.6.0'
   } = options;
 
-  let startTime;
-
-  cy.viewport(viewport.width, viewport.height);
-
-  cy.then(() => {
-    startTime = performance.now();
-    cy.log(`Load started at: ${new Date().toISOString()}`);
-  });
-
-  cy.visit('/', {
-    failOnStatusCode: false,
-    timeout: 30000
-  });
-
-  cy.document().its('readyState').should('eq', 'complete');
-
-  // Only check UI is rendered — no port/hardware checks
-  cy.get('body', { timeout }).should(($body) => {
-    const hasButton     = $body.find('button').length > 0;
-    const hasConnection = $body.text().includes('Connect') ||
-                          $body.text().includes('Connection');
-
-    expect(hasButton, 'buttons should exist').to.be.true;
-    expect(hasConnection, 'connection text should exist').to.be.true;
-  });
-
-  cy.then(() => {
-    const endTime  = performance.now();
-    const loadTime = ((endTime - startTime) / 1000).toFixed(2);
-    const status   = loadTime < 5 ? 'FAST' : loadTime < 10 ? 'ACCEPTABLE' : 'SLOW';
-
-    cy.log(`[${status}] UI load time: ${loadTime}s`);
-    cy.task('log', `[${status}] UI Load Time: ${loadTime}s`);
-  });
+  cy.viewport(...viewport);
+  cy.visit('/', { timeout: visitTimeout });
+  cy.title({ timeout: elementTimeout }).should('eq', expectedTitle);
+  cy.get('body', { timeout: elementTimeout }).should('be.visible');
 });
+
 // ----------------------
 //3.Connect to CNC machine grbl cy.connectMachine();
 // ----------------------
@@ -482,7 +455,7 @@ Cypress.Commands.add('goToLocation', (options = {}) => {
 
   cy.log(`Going to location: X=${x}, Y=${y}, Z=${z}`);
 
-  // Step 1: Open Go To Location dialog — confirmed from recording
+  // Step 1: Open Go To Location dialog 
   cy.log('Opening Go To Location popup...');
   cy.get('div.min-h-10 > div:nth-of-type(1) > button', { timeout: 10000 })
     .filter(':visible')

@@ -9,7 +9,7 @@ describe('Dynamic Keyboard Jogging Test - All Axes', () => {
     cy.wait(3000);
   });
 
-  // Map axisIndex to data-testid selectors from recording
+  // Map axisIndex to data-testid selectors 
   const axisSelector = {
     1: "[data-testid='wcs-input-X']",
     2: "[data-testid='wcs-input-Y']",

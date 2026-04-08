@@ -19,13 +19,13 @@ describe('Gsender testing preset create update', () => {
     const jogAndVerifySpeed = (label, selector) => {
       cy.log(`Testing ${label} jogging...`);
 
-      // Use ID-based selector from recording (not path#id)
+  
       cy.get(selector)
         .should('exist')
         .trigger('mousedown', { force: true });
 
       cy.wait(1500).then(() => {
-        // Target the exact speed container from the recording
+      
         // xpath: main-content > div > div[1] > div[2] > div > section > div > div > div[3] > div[1]
         cy.get('div.h-\\[75\\%\\] section > div > div > div.gap-1 > div.items-center')
           .should('exist')
@@ -155,7 +155,7 @@ describe('Gsender testing preset create update', () => {
         cy.log('Preset values verified');
       });
 
-    // ── Steps 9-12: Hold jog and verify speed from recording selectors
+    // ── Steps 9-12: Hold jog and verify speed 
     cy.log('Step 9: Testing jog directions and speed...');
 
     //  #xPlusYPlus and #xMinusYMinus (not path#id)
