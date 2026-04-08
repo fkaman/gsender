@@ -478,7 +478,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
 
         return JSON.stringify(searchChecker)
             .toLowerCase()
-            .includes(searchTerm.toLowerCase());
+            .includes(searchTerm.trim().toLowerCase());
     }
 
     /**
@@ -493,7 +493,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             // ***first, check conditions that are always applicable
 
             // Hide hidden when filtering
-            if ('hidden' in v && (!searchTerm || searchTerm.length === 0)) {
+            if ('hidden' in v && (!searchTerm || searchTerm.trim().length === 0)) {
                 if (v.hidden(getPendingOrStore)) {
                     // only return if it's supposed to be hidden, otherwise we have more to check
                     return false;
@@ -526,7 +526,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             const modified = checkIfModified(v);
             const searched = checkSearchTerm(v);
 
-            if (searchTerm.length === 0 || !searchTerm) {
+            if (searchTerm.trim().length === 0 || !searchTerm) {
                 // if no search, check modified
                 if (filterNonDefault) {
                     return modified;
