@@ -1,18 +1,24 @@
 import { StepProps } from 'app/features/AccessoryInstaller/types';
 import { StepActionButton } from 'app/features/AccessoryInstaller/components/wizard/StepActionButton.tsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PositionSetter } from 'app/features/AccessoryInstaller/Wizards/atc/components/PositionSetter.tsx';
 import { useSelector } from 'react-redux';
 import { RootState } from 'app/store/redux';
 import controller from 'app/lib/controller.ts';
 import { useTypedSelector } from 'app/hooks/useTypedSelector.ts';
 import store from 'app/store';
+import { useWorkspaceState } from 'app/hooks/useWorkspaceState';
+import { mapPositionToUnits, in2mm } from 'app/lib/units.ts';
+import { IMPERIAL_UNITS } from 'app/constants';
 
 export function RackPosition({ onComplete, onUncomplete }: StepProps) {
     const [rackPositionMethod, setRackPositionMethod] =
         useState<string>('utility');
     const [isComplete, setIsComplete] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+
+    const { units } = useWorkspaceState();
+    const isManuallyEditing = useRef(false);
 
     const rackless = store.get(
         'widgets.atc.templates.variables._tc_rack_enable.value',
@@ -53,10 +59,15 @@ export function RackPosition({ onComplete, onUncomplete }: StepProps) {
     }, [ATCIPositionSet]);
 
     useEffect(() => {
+        if (isManuallyEditing.current) return;
         if (!mpos || !mpos.x || !mpos.y || !mpos.z) return;
         const { x, y, z } = mpos;
-        setPosition({ x, y, z });
-    }, [mpos]);
+        setPosition({
+            x: mapPositionToUnits(x, units),
+            y: mapPositionToUnits(y, units),
+            z: mapPositionToUnits(z, units),
+        });
+    }, [mpos, units]);
 
     useEffect(() => {
         if (rackless === 0 && slotCount === 0) {
@@ -72,8 +83,10 @@ export function RackPosition({ onComplete, onUncomplete }: StepProps) {
     };
 
     const setPositionViaPositionSetting = () => {
+        const toMM = (val: string) =>
+            units === IMPERIAL_UNITS ? in2mm(Number(val)) : Number(val);
         controller.command('gcode', [
-            `G10 L2 P7 X${position.x} Y${position.y} Z${position.z}`,
+            `G10 L2 P7 X${toMM(position.x)} Y${toMM(position.y)} Z${toMM(position.z)}`,
             '$#',
         ]);
         setTimeout(() => {
@@ -157,7 +170,9 @@ export function RackPosition({ onComplete, onUncomplete }: StepProps) {
                         xPosition={position.x}
                         yPosition={position.y}
                         zPosition={position.z}
+                        units={units}
                         onPositionChange={(positions) => {
+                            isManuallyEditing.current = true;
                             setPosition(positions);
                         }}
                         actionButton={
