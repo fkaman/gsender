@@ -83,6 +83,7 @@ export interface gSenderInfo {
 export interface SDCardFile {
     name: string;
     size: number;
+    unusable?: boolean;
 }
 
 export interface ControllerState {

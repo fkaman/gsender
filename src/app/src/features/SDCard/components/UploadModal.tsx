@@ -16,6 +16,16 @@ interface UploadModalProps {
     onClose: () => void;
 }
 
+// Mirrors the firmware's filename_valid() check from the SD card plugin.
+// Returns null if valid, or an error string describing the problem.
+export function validateSDFilename(filename: string): string | null {
+    if (filename.length > 40) return 'Filename too long (max 40 characters)';
+    if (filename.includes('?')) return 'Filename contains invalid character: ?';
+    if (filename.includes('~')) return 'Filename contains invalid character: ~';
+    if (filename.includes('!')) return 'Filename contains invalid character: !';
+    return null;
+}
+
 // List files on the card recursively. Only CNC related filetypes are listed: .nc, .ncc, .ngc, .cnc, .gcode, .txt, .text, .tap and .macro.
 export const ACCEPTED_EXTENSIONS = [
     '.gcode',
@@ -45,11 +55,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         const file = files[0]; // Only take the first file
         const extension = '.' + file.name.split('.').pop()?.toLowerCase();
 
-        if (ACCEPTED_EXTENSIONS.includes(extension)) {
-            setSelectedFile(file);
-        } else {
+        if (!ACCEPTED_EXTENSIONS.includes(extension)) {
             toast.error('Please select a valid gcode file');
+            return;
         }
+
+        const validationError = validateSDFilename(file.name);
+        if (validationError) {
+            toast.error(`Invalid filename: ${validationError}`);
+            return;
+        }
+
+        setSelectedFile(file);
     };
 
     const handleDrop = (e: React.DragEvent) => {
