@@ -6,7 +6,7 @@ export function Search() {
     const inputRef = useRef<HTMLInputElement>(null);
 
     function onSearchChange() {
-        setSearchTerm(inputRef.current.value);
+        setSearchTerm(inputRef.current.value.trim());
     }
 
     function onSearchClear(e) {
