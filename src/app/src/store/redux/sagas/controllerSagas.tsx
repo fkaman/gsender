@@ -802,12 +802,12 @@ export function* initialize(): Generator<any, void, any> {
         // estimateWorker?.terminate();
     });
 
-    // pubsub.subscribe(
-    //     'reparseGCode',
-    //     (_msg: string, { content, size, name, visualizer }) => {
-    //         parseGCode(content, size, name, visualizer);
-    //     },
-    // );
+    pubsub.subscribe(
+        'reparseGCode',
+        (_msg: string, { content, size, name, visualizer }) => {
+            parseGCode(content, size, name, visualizer);
+        },
+    );
 
     controller.addListener('workflow:pause', (opts: { data: string }) => {
         const { data } = opts;

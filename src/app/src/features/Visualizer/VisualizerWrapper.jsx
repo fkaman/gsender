@@ -97,13 +97,20 @@ class VisualizerWrapper extends Component {
 
     subscribe() {
         const tokens = [
-            pubsub.subscribe('litemode:change', (msg, isFileLoaded) => {
-                const nowInLiteMode = shouldVisualizeSVG() || !shouldVisualize();
-                if (nowInLiteMode && this.threeVisualizer) {
+            pubsub.subscribe('litemode:change', (msg, { isFileLoaded, enteringLiteMode, wasInEverythingMode }) => {
+                if (enteringLiteMode && this.threeVisualizer) {
                     this.threeVisualizer.disposeGeometries();
                 }
-                if (isFileLoaded) {
+                if (!enteringLiteMode) {
+                    // Always rebuild scene structure when exiting lite mode —
+                    // disposeGeometries() orphaned this.group, stopped the animation loop,
+                    // and cleared lights/grids. rebuildSceneContents() restores all of this.
                     this.setNeedRefresh(true);
+                    if (isFileLoaded && wasInEverythingMode) {
+                        // Geometry was never parsed in EVERYTHING mode.
+                        // reparseGCode() runs after rebuildSceneContents() completes (next cycle).
+                        this.setNeedReload(true);
+                    }
                 }
                 this.forceUpdate();
             }),

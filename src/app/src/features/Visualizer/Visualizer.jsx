@@ -780,6 +780,9 @@ class Visualizer extends Component {
     reloadGCode() {
         const { actions, state } = this.props;
         const { gcode } = state;
+        // Guard against null visualization — occurs when rebuildSceneContents() is called
+        // after exiting EVERYTHING lite mode where no geometry was ever parsed.
+        if (!gcode.visualization) return;
         actions.loadGCode('', gcode.visualization);
     }
 

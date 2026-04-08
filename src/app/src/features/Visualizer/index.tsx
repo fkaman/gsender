@@ -77,6 +77,7 @@ import {
     GENERAL_CATEGORY,
     VISUALIZER_CATEGORY,
     OVERRIDES_CATEGORY,
+    LIGHTWEIGHT_OPTIONS,
 } from '../../constants';
 import { CAMERA_MODE_PAN, CAMERA_MODE_ROTATE } from './constants';
 import { getVisualizerTheme } from 'app/lib/getVisualizerTheme';
@@ -573,7 +574,7 @@ class Visualizer extends Component {
             },
         },
         handleLiteModeToggle: () => {
-            const { liteMode } = this.state;
+            const { liteMode, liteOption } = this.state;
             const { isFileLoaded } = this.props;
             const newLiteModeValue = !liteMode;
 
@@ -582,10 +583,21 @@ class Visualizer extends Component {
                 minimizeRenders: newLiteModeValue,
             });
 
+            // Write to store immediately so shouldVisualize() returns the correct value
+            // when VisualizerWrapper.componentDidUpdate fires (child before parent in React's
+            // bottom-up lifecycle, before index.tsx's own componentDidUpdate updates the store).
+            this.config.set('liteMode', newLiteModeValue);
+
             // instead of calling loadGCode right away,
             // use this pubsub to invoke a refresh of the visualizer wrapper.
             // this removes visual glitches that would otherwise appear.
-            pubsub.publish('litemode:change', isFileLoaded);
+            const wasInEverythingMode =
+                liteMode && liteOption === LIGHTWEIGHT_OPTIONS.EVERYTHING;
+            pubsub.publish('litemode:change', {
+                isFileLoaded,
+                enteringLiteMode: newLiteModeValue,
+                wasInEverythingMode,
+            });
         },
         lineWarning: {
             onContinue: () => {
