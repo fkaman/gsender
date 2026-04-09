@@ -14,6 +14,7 @@ import combokeys from 'app/lib/combokeys';
 import log from 'app/lib/log';
 import Button from 'app/components/Button';
 import { toast } from 'app/lib/toaster';
+import pubsub from 'pubsub-js';
 
 import Macro from './Macro';
 import MacroForm from './MacroForm';
@@ -220,6 +221,7 @@ const MacroWidget = ({
                     }
                 },
             );
+            pubsub.publish('macro:run');
         },
         loadMacro: async (id: string) => {
             try {
