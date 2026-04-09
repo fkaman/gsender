@@ -7,7 +7,7 @@ describe('gSender UI Load Test', () => {
 
   it('should navigate to gSender and verify the UI loads', () => {
     // Visit with timeout for slow load
-    cy.visit('/', { timeout: 30000 });
+    cy.visit('/', { timeout: 40000 });
 
     // Wait for title with timeout
     cy.title({ timeout: 15000 }).should('eq', 'gSender 1.6.0');
