@@ -148,7 +148,7 @@ class VisualizerWrapper extends Component {
             <>
                 {/* Keep Visualizer always mounted to avoid WebGL renderer recreation on each toggle.
                     Hide with CSS when not active so the renderer instance is preserved. */}
-                <div style={{ display: show3D ? '' : 'none' }}>
+                <div style={{ display: show3D ? '' : 'none' }} className="w-full h-full">
                     <Visualizer
                         show={show && show3D}
                         cameraPosition={cameraPosition}
