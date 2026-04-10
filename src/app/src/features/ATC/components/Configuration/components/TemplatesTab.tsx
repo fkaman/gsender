@@ -17,7 +17,7 @@ import {
     CircleHelp,
 } from 'lucide-react';
 import cn from 'classnames';
-import { useConfigContext } from 'app/features/ATC/components/Configuration/hooks/useConfigStore.tsx';
+import { useConfigContext, mapDefaultsToValues } from 'app/features/ATC/components/Configuration/hooks/useConfigStore.tsx';
 import {
     ATCIMacroConfig,
     Macro,
@@ -134,6 +134,10 @@ export function TemplateManagerProvider({
                     ...data,
                     sdVersion: templates?.sdVersion ?? defaultVersion,
                 } as ATCIMacroConfig;
+
+                if (nextTemplates.variables) {
+                    mapDefaultsToValues(nextTemplates.variables);
+                }
 
                 setTemplates(nextTemplates);
                 store.replace('widgets.atc.templates', nextTemplates);
