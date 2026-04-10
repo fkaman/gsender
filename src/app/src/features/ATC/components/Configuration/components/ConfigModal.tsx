@@ -45,6 +45,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 variables: { ...updatedConfig.variables },
             });
             setTemplatesRef.current(updatedConfig);
+            console.log(payload);
         };
 
         controller.addListener('sdcard:json', handleSdcardJson);
