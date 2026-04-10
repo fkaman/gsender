@@ -2507,7 +2507,7 @@ class GrblHalController {
                     } else {
                         this.emit('ymodem:error', 'SD Card not detected, please insert an SD Card in FAT32 format, 32 GB or under, and try again');
                     }
-                }, 1500);
+                }, 1250);
             },
             'ymodem:uploadFiles': () => {
                 const [files] = args;
