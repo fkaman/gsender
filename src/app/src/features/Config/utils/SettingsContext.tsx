@@ -288,7 +288,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         [pendingValueMap],
     );
 
-    useEffect(() => {
+    function repopulateMachineProfile() {
         const storeMachineProfile: MachineProfile = store.get(
             'workspace.machineProfile',
             {},
@@ -302,9 +302,14 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             console.error(
                 'No machine profile with this ID found, using previous value.',
             );
-            return setMachineProfile(storeMachineProfile);
+            setMachineProfile(storeMachineProfile);
+            return;
         }
         setMachineProfile(latest);
+    }
+
+    useEffect(() => {
+        repopulateMachineProfile();
     }, []);
 
     function repopulateSettings() {
@@ -403,6 +408,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
         repopulateSettings();
         pubsub.subscribe('repopulate', () => {
             repopulateSettings();
+            repopulateMachineProfile();
         });
         pubsub.subscribe('eeprom:repopulate', () => {
             repopulateEEPROM();
