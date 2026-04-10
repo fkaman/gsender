@@ -783,7 +783,7 @@ class Visualizer extends Component {
         // Guard against null visualization — occurs when rebuildSceneContents() is called
         // after exiting EVERYTHING lite mode where no geometry was ever parsed.
         if (!gcode.visualization) return;
-        actions.loadGCode('', gcode.visualization);
+        actions.loadGCode(gcode.name, gcode.visualization);
     }
 
     removeSceneGroup() {
