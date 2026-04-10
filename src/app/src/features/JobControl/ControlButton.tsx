@@ -29,8 +29,8 @@ import {
     WORKFLOW_STATE_RUNNING,
 } from '../../constants';
 import get from 'lodash/get';
-import reduxStore, {RootState} from 'app/store/redux';
-import {useTypedSelector} from "app/hooks/useTypedSelector.ts";
+import reduxStore, { RootState } from 'app/store/redux';
+import { useTypedSelector } from 'app/hooks/useTypedSelector.ts';
 
 type MACHINE_CONTROL_BUTTONS_T =
     (typeof MACHINE_CONTROL_BUTTONS)[keyof typeof MACHINE_CONTROL_BUTTONS];
@@ -75,23 +75,30 @@ const ControlButton: React.FC<ControlButtonProps> = ({
 }) => {
     const [isRunningSDFile, setIsRunningSDFile] = useState<boolean>(false);
     // If we have a name, we a running a SD file - convert to boolean in following useEffect
-    const sdRunReported = useTypedSelector((state: RootState) => state.controller.state.status?.SD?.name);
+    const sdRunReported = useTypedSelector(
+        (state: RootState) => state.controller.state.status?.SD?.name,
+    );
     useEffect(() => {
         if (sdRunReported !== null) {
             setIsRunningSDFile(true);
         } else {
-            setIsRunningSDFile(false)
+            setIsRunningSDFile(false);
         }
     }, [sdRunReported]);
 
-    function canRun(reduxActiveState?: GRBL_ACTIVE_STATES_T, reduxWorkflow?: { state: WORKFLOW_STATES_T }) {
+    function canRun(
+        reduxActiveState?: GRBL_ACTIVE_STATES_T,
+        reduxWorkflow?: { state: WORKFLOW_STATES_T },
+    ) {
         const currentActiveState = reduxActiveState || activeState;
         const currentWorkflow = reduxWorkflow || workflow;
         const { state } = currentWorkflow;
         return (
             !isRunningSDFile &&
             (currentActiveState === GRBL_ACTIVE_STATE_IDLE ||
-            currentActiveState === GRBL_ACTIVE_STATE_HOLD) && state !== WORKFLOW_STATE_RUNNING
+                currentActiveState === GRBL_ACTIVE_STATE_HOLD ||
+                currentActiveState === GRBL_ACTIVE_STATE_CHECK) &&
+            state !== WORKFLOW_STATE_RUNNING
         );
     }
 
@@ -301,6 +308,9 @@ const ControlButton: React.FC<ControlButtonProps> = ({
 
         if (state === WORKFLOW_STATE_IDLE) {
             const [atcInvalid, payload] = validateATC();
+            if (currentActiveState === GRBL_ACTIVE_STATE_CHECK) {
+                controller.command('gcode', '%global.state.testWCS=modal.wcs'); // go in test wcs before starting
+            }
             if (atcInvalid) {
                 pubsub.publish('atc_validator', payload);
                 return;
@@ -357,7 +367,10 @@ const ControlButton: React.FC<ControlButtonProps> = ({
                             !disabled && type === STOP,
                     },
                 )}
-                onClick={onClick[type]}
+                onClick={() => {
+                    // keep this anonymous function or it will pass the onclick event
+                    onClick[type]();
+                }}
                 disabled={disabled}
             >
                 {icons[type]}
