@@ -2491,14 +2491,23 @@ class GrblHalController {
             },
             'ymodem:upload': async () => {
                 const [fileData] = args;
-                if (this.connection.isNetwork()) {
-                    const [address] = this.connection.getFTPInfo();
-                    const FTPPort = Number(this.runner.getSetting('$308', 21));
-                    await this.ftpClient.openConnection(address, FTPPort, 'grblHAL', 'grblHAL');
-                    await this.ftpClient.sendFile(fileData);
-                    return;
-                }
-                this.ymodem.sendFile(fileData, this.connection.getConnectionObject());
+
+                this.command('sdcard:mount');
+
+                setTimeout(async () => {
+                    if (this.runner.isSDMounted()) {
+                        if (this.connection.isNetwork()) {
+                            const [address] = this.connection.getFTPInfo();
+                            const FTPPort = Number(this.runner.getSetting('$308', 21));
+                            await this.ftpClient.openConnection(address, FTPPort, 'grblHAL', 'grblHAL');
+                            await this.ftpClient.sendFile(fileData);
+                            return;
+                        }
+                        this.ymodem.sendFile(fileData, this.connection.getConnectionObject());
+                    } else {
+                        this.emit('ymodem:error', 'SD Card not detected, please insert an SD Card in FAT32 format, 32 GB or under, and try again');
+                    }
+                }, 1500);
             },
             'ymodem:uploadFiles': () => {
                 const [files] = args;
