@@ -81,7 +81,7 @@ export function generateAllMacros(
 
 export function writeableATCIConfig(json: ATCIJSON): Macro {
     const content = JSON.stringify(json) + '\n';
-    console.log(content);
+
     return {
         name: 'ATCI.macro',
         content,
