@@ -70,15 +70,21 @@ export function SpindleConfig({ onComplete, onUncomplete }) {
     return (
         <div className="flex flex-col gap-5 justify-start">
             <p className="dark:text-white">
-                Your spindle must now be configured.  Several settings will be sent configuring the spindle speeds, and various modbus addresses.
+                Your spindle settings are applied in this step and the controller will restart automatically.
             </p>
-            <p>
-                If you are on more modern versions of grblHAL, your controller will be rebooted at the end of this step.
-            </p>
-            <p>If you are on older versions, you will need to manually restart your controller.</p>
-            <p>You can view the commands to be sent in the sidebar.</p>
+            <ol className="list-decimal p-5 gap-4 space-y-2">
+                <li>
+                    Press <b>"Apply And Restart"</b>
+                </li>
+                {
+                    !firmwarePastVersion(ATCI_SUPPORTED_VERSION) && (
+                        <li>Reboot your controller using the power switch and reconnect</li>
+                    )
+                }
+                <li>Click <b>"Next"</b></li>
+            </ol>
             <StepActionButton
-                label="Setup Spindle and Reboot"
+                label="Setup Spindle"
                 runningLabel="Configuring..."
                 onApply={setupSpindleAndReboot}
                 isComplete={hasSetupSpindle}
