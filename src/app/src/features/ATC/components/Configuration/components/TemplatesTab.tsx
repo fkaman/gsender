@@ -66,7 +66,7 @@ export function TemplateManagerProvider({
     const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const defaultVersion = store.get('widgets.atc.templates.version', 20250909);
+    const defaultVersion = store.get('widgets.atc.templates.version', 20260410);
 
     const sortedTemplates = useMemo(() => {
         if (!templates?.macros) {
