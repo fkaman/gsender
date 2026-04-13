@@ -1858,8 +1858,6 @@ class GrblHalController {
                     modalGCode.push(this.event.getEventCode(PROGRAM_START));
                     modalGCode.push(`G0 G90 G21 Z${zMax + safeHeight}`);
                     // ATCI - add M6 before spindles turned on to get correct tool to spin up
-                    console.log(modal);
-                    console.log(this.toolChangeContext);
                     if (atci && modal.tool !== 0) {
                         if (this.toolChangeContext.mappings) {
                             const remap = _.get(this.toolChangeContext.mappings, modal.tool, null);
@@ -1875,6 +1873,8 @@ class GrblHalController {
 
                     if (hasSpindle) {
                         modalGCode.push(`${modal.spindle} S${spindleRate}`);
+                    } else {
+                        modalGCode.push(`${modal.units} F${feedRate}`);
                     }
                     modalGCode.push(`G0 G90 G21 X${xVal.toFixed(3)} Y${yVal.toFixed(3)}`);
                     if (aVal) {
