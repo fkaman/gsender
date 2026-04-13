@@ -20,10 +20,10 @@ export const getATCUnavailablePayload = ({
     if (!isATCAvailable) {
         return {
             reason: 'firmware_not_compiled',
-            title: 'Firmware Not Compiled',
+            title: 'No ATC Flag',
             message: 'Firmware did not report ATC=1 on startup.',
             additionalInfo:
-                'Ensure the SD card is installed and mounted correct and the firmware has ATC support compiled in.',
+                'Ensure the SD card is installed and mounted correctly, a TC.macro file exists, and the firmware has ATC support compiled in.',
         };
     }
     if (!isHomed) {
