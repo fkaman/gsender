@@ -10,6 +10,8 @@ import {
     Search,
     ChevronUp,
     ChevronDown,
+    BoxIcon,
+    CopyCheck,
 } from 'lucide-react';
 
 import { Button } from 'app/components/Button';
@@ -439,6 +441,14 @@ const GcodeEditor = ({ onClose }: GcodeEditorProps) => {
                 position: 'bottom-right',
             });
         }
+    };
+
+    const handleSelectAll = () => {
+        setSelectedLines((current) => {
+            if (current.size === gcodeLines.length) return new Set();
+
+            return new Set(gcodeLines.map((_, i) => i));
+        });
     };
 
     if (!content) {
@@ -880,6 +890,16 @@ const GcodeEditor = ({ onClose }: GcodeEditorProps) => {
                         content: 'Search (Ctrl+F / Cmd+F)',
                     }}
                 />
+                <Button 
+                    variant={selectedLines.size === gcodeLines.length ? 'primary' : 'outline'}
+                    size="icon" 
+                    icon={<CopyCheck className="h-4 w-4" />} 
+                    onClick={() => handleSelectAll()} 
+                    disabled={isJobRunning}
+                    tooltip={{
+                        content: selectedLines.size === gcodeLines.length ? 'Deselect all lines' : 'Select all lines',
+                    }} 
+                />
                 <Button
                     variant="outline"
                     size="icon"
@@ -895,12 +915,11 @@ const GcodeEditor = ({ onClose }: GcodeEditorProps) => {
                               : 'Copy all lines',
                     }}
                 />
-                {selectedLines.size > 0 && (
                     <Button
                         variant="outline"
                         size="icon"
                         onClick={handleDeleteSelected}
-                        disabled={isJobRunning}
+                        disabled={isJobRunning || selectedLines.size === 0}
                         className="border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                         icon={<Trash2 className="h-4 w-4" />}
                         tooltip={{
@@ -909,7 +928,6 @@ const GcodeEditor = ({ onClose }: GcodeEditorProps) => {
                                 : `Delete ${selectedLines.size} selected line(s)`,
                         }}
                     />
-                )}
                 <Button
                     variant="outline"
                     size="icon"
