@@ -1609,6 +1609,8 @@ class GrblController {
                     modalGCode.push(`G0 G90 G21 Z${zMax + safeHeight}`);
                     if (hasSpindle) {
                         modalGCode.push(`${modal.units} ${modal.spindle} F${feedRate} S${spindleRate}`);
+                    } else {
+                        modalGCode.push(`${modal.units} F${feedRate}`); // Fallback to add F always just in case no spindle
                     }
                     modalGCode.push(`G0 G90 G21 X${xVal.toFixed(3)} Y${yVal.toFixed(3)}`);
                     if (aVal) {
@@ -1620,6 +1622,8 @@ class GrblController {
                     modalGCode.push(`${modal.motion}`);
                     modalGCode.push(`G4 P${spindleDelay}`);
                     modalGCode.push('%_GCODE_START');
+
+                    console.log(modalGCode);
 
                     // Fast forward sender to line
                     this.sender.setStartLine(lineToStartFrom);
