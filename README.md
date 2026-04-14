@@ -120,6 +120,7 @@ You can both run gSender locally using the public code-base as well as compile i
 - Expanded SD card file management with upload, run, delete, and progress tracking (yModem/FTP support)
 - Full Automatic Tool Changer (ATC) workflow support including tool table, timeline, remapping, and controls
 - Introduced ATC setup tool to simplify initial configuration and macro installation
+- Introduce Spindle setup tool, supporting sienciHAL and grblHAL core versions
 - Visualization improvements including faster parsing, reduced memory usage, rotary accuracy fixes, and tool-based coloring
 - Added option to hide processed lines for improved readability on long jobs
 - New EEPROM editor for viewing and modifying controller configuration values
