@@ -112,6 +112,29 @@ You can both run gSender locally using the public code-base as well as compile i
 <details>
 <summary>Expand to see all version notes</summary>
 
+### 1.6.0 (April 15, 2026)
+- Expanded compatibility with newer grblHAL firmware, improving reliability with updated controllers and settings
+- Significantly faster startup times through optimized initialization and module loading
+- Build system improvements resulting in faster builds, smaller install size, and Mac silicon support with signing
+- Added built-in G-code editor with syntax highlighting, search, navigation, and inline editing
+- Expanded SD card file management with upload, run, delete, and progress tracking (yModem/FTP support)
+- Full Automatic Tool Changer (ATC) workflow support including tool table, timeline, remapping, and controls
+- Introduced ATC setup tool to simplify initial configuration and macro installation
+- Visualization improvements including faster parsing, reduced memory usage, rotary accuracy fixes, and tool-based coloring
+- Added option to hide processed lines for improved readability on long jobs
+- New EEPROM editor for viewing and modifying controller configuration values
+- Added Check Mode automation for pre-run file validation using GRBL check mode
+- Ethernet enhancements including custom ports and improved auto-reconnect
+- Improved UI responsiveness and layout for smaller screens and portrait mode
+- Remote mode improvements including synced settings and config access
+- Improved job time estimation, including rotary jobs and feed override scenarios
+- Added scheduled settings backup options
+- Improved handling of M0/M1 pauses with comment display
+- Added file associations for opening G-code files directly from the OS
+- Improved config tool performance and reactivity
+- Gamepad configuration updates and jogging behaviour improvements
+- Numerous bug fixes, dependency updates, and overall stability improvements
+
 ### 1.5.7 (January 8th, 2026)
 - Fixed issue with start job shortcut not firing in some situations.
 - Park shortcut now persists between sessions.
