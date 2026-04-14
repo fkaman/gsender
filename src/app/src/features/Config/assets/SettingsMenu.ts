@@ -38,10 +38,10 @@ import {
     LIGHTWEIGHT_OPTIONS,
     OUTLINE_MODES,
     SPINDLE_MODE,
+    THEMES,
     WORKSPACE_MODE,
 } from 'app/constants';
 import { LaserWizard } from 'app/features/Config/components/wizards/LaserWizard.tsx';
-import { ATCIWizard } from 'app/features/Config/components/wizards/ATCiWizard.tsx';
 import {
     GamepadLinkWizard,
     KeyboardLinkWizard,
@@ -69,6 +69,8 @@ import {
     TOASTER_UNTIL_CLOSE,
 } from 'app/lib/toaster/ToasterLib';
 import isElectron from 'is-electron';
+import { THEMES_T } from 'app/features/Visualizer/definitions';
+import { JSX } from 'react';
 
 export interface SettingsMenuSection {
     label: string;
@@ -118,6 +120,8 @@ export interface gSenderSetting {
     onDisable?: () => void;
     onEnable?: () => void;
     onUpdate?: () => void;
+    onApply?: () => void;
+    onChange?: (args?: any) => void;
     min?: number;
     max?: number;
     remap?: EEPROM;
@@ -300,9 +304,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description:
                             'Independant colour control for the visualizer.',
                         type: 'select',
-                        options: ['Light', 'Dark'],
-                        onUpdate: () => {
-                            pubsub.publish('theme:change');
+                        options: [THEMES.LIGHT_THEME, THEMES.DARK_THEME],
+                        onChange: (theme: THEMES_T) => {
+                            pubsub.publish('theme:change', theme);
                         },
                     },
                     {
@@ -1319,7 +1323,7 @@ export const SettingsMenu: SettingsMenuSection[] = [
                     },
                     {
                         type: 'eeprom',
-                        eID: '$394'
+                        eID: '$394',
                     },
                     {
                         label: 'Spindle on delay',
@@ -1830,7 +1834,10 @@ export const SettingsMenu: SettingsMenuSection[] = [
                                 'workspace.toolChange.moveToManualPosition',
                                 false,
                             );
-                            return strategy !== 'Fixed Tool Sensor' || !moveToLocation;
+                            return (
+                                strategy !== 'Fixed Tool Sensor' ||
+                                !moveToLocation
+                            );
                         },
                     },
                     {
@@ -2116,7 +2123,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description: 'Play sound when a job finishes.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2128,7 +2137,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                             'Play sound when the machine enters an alarm state.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2136,10 +2147,13 @@ export const SettingsMenu: SettingsMenuSection[] = [
                     {
                         label: 'Tool change sound',
                         key: 'workspace.accessibility.audioCues.toolChange',
-                        description: 'Play sound when a tool change is required.',
+                        description:
+                            'Play sound when a tool change is required.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2150,7 +2164,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description: 'Play sound after a successful probe.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },

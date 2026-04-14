@@ -64,7 +64,9 @@ interface iSettingsContext {
     getEEPROMDefaultValue: (v: EEPROM) => string | number;
     isFirmwareCurrent: boolean;
     profileChangedSinceDefaults: boolean;
-    setProfileChangedSinceDefaults?: React.Dispatch<React.SetStateAction<boolean>>;
+    setProfileChangedSinceDefaults?: React.Dispatch<
+        React.SetStateAction<boolean>
+    >;
 }
 
 interface SettingsProviderProps {
@@ -152,6 +154,7 @@ function populateSettingsValues(
                     o.value = store.get(o.key);
                     o.globalIndex = index;
                     o.defaultValue = fetchDefaultValue(o.key);
+                    o.onChange && o.onChange();
                     globalValueReference.push({ ...o });
                     index++;
                 }
@@ -232,7 +235,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     const [settingsValues, setSettingsValues] = useState<gSenderSetting[]>([]);
     const [filterNonDefault, setFilterNonDefault] = useState(false);
     const [isFirmwareCurrent, setIsFirmwareCurrent] = useState(false);
-    const [profileChangedSinceDefaults, setProfileChangedSinceDefaults] = useState(false);
+    const [profileChangedSinceDefaults, setProfileChangedSinceDefaults] =
+        useState(false);
 
     const firmwareVersion = useTypedSelector(
         (state: RootState) => state.controller.settings.version?.semver,
@@ -499,7 +503,10 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             // ***first, check conditions that are always applicable
 
             // Hide hidden when filtering
-            if ('hidden' in v && (!searchTerm || searchTerm.trim().length === 0)) {
+            if (
+                'hidden' in v &&
+                (!searchTerm || searchTerm.trim().length === 0)
+            ) {
                 if (v.hidden(getPendingOrStore)) {
                     // only return if it's supposed to be hidden, otherwise we have more to check
                     return false;

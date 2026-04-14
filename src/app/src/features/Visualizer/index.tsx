@@ -90,6 +90,10 @@ interface Views {
     type: 'isometric' | 'top' | 'front' | 'right' | 'left' | 'default';
 }
 
+const debouncedThemeChange = debounce(() => {
+    pubsub.publish('visualizer:redraw');
+}, 500);
+
 class Visualizer extends Component {
     static propTypes = {
         widgetId: PropTypes.string,
@@ -1389,16 +1393,18 @@ class Visualizer extends Component {
 
     subscribe() {
         const tokens = [
-            pubsub.subscribe('theme:change', (msg) => {
-                const theme = this.config.get('theme', 'dark');
+            pubsub.subscribe('theme:change', (_msg, themeType) => {
+                const theme = themeType || this.config.get('theme', 'dark');
                 this.setState(
                     {
                         theme: theme,
+                        currentTheme: getVisualizerTheme(theme),
                     },
-                    this.setState({
-                        currentTheme: getVisualizerTheme(),
-                    }),
-                    pubsub.publish('visualizer:redraw'),
+                    () => {
+                        this.setState({}, () => {
+                            debouncedThemeChange();
+                        });
+                    },
                 );
             }),
             pubsub.subscribe('visualizer:settings', () => {
