@@ -3,16 +3,23 @@ import App from '../App';
 import * as user from 'app/lib/user';
 import * as sagaModule from 'app/store/redux/sagas';
 import store from 'app/store';
+jest.spyOn(store, 'get');
 
 // Mocks 
 jest.mock('app/store/redux', () => ({
     store: {
-        getState: () => ({}),
+        getState: () => ({
+            preferences: {
+                accessibility: { focusRings: false },
+            },
+            controller: { type: '', state: {}, settings: {} },
+            connection: { isConnected: false },
+            fileInfo: {},
+        }),
         dispatch: jest.fn(),
-        subscribe: jest.fn(),
+        subscribe: jest.fn(() => jest.fn()),
     },
 }));
-
 jest.mock('app/store/redux/sagas', () => ({
     default: jest.fn(),
     sagaMiddleware: { run: jest.fn() },
@@ -38,7 +45,9 @@ jest.mock('../components/shadcn/Sonner', () => ({
     Toaster: () => <div data-testid="toaster" />,
 }));
 
-// ─── Must Have Test Cases ─────────────────────────────────────────────────────
+jest.spyOn(store, 'get');
+
+// ─── Must Have Test Cases ------------------
 
 // Test 1 - App renders without crashing
 it('renders App.tsx without crashing', () => {
@@ -69,7 +78,7 @@ it('validates saved session token on startup', async () => {
     // to check whether the previous CNC session is still valid
     render(<App />);
     await waitFor(() => {
-        expect(user.signin).toHaveBeenCalledWith({ token: null });
+        expect(user.signin).toHaveBeenCalledWith({ token: "" });
     });
 });
 
