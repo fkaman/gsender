@@ -303,6 +303,7 @@ class GrblHalController {
                 let comment = line.match(commentMatcher);
                 const commentString = (comment && comment[0].length > 0) ? comment[0].trim().replace(';', '') : '';
                 line = line.replace(commentMatcher, '').trim();
+                const ignoreEvent = context ? context.ignoreEvent : true;
                 context = this.populateContext(context);
 
                 // We don't want some of these events firing if updating EEPROM in a macro - super edge case.
@@ -329,7 +330,7 @@ class GrblHalController {
                     }
                     if (line === PAUSE_START) {
                         log.debug('Found M0/M1, pausing program');
-                        this.emit('sender:M0M1', { data: 'M0/M1', comment: commentString });
+                        this.emit('sender:M0M1', { data: 'M0/M1', comment: commentString, ignoreEvent: ignoreEvent });
                         return 'G4 P0.5';
                     }
                     if (line === '%_GCODE_START') {
@@ -386,7 +387,7 @@ class GrblHalController {
                             data: 'M6',
                             comment: commentString
                         }); // Hold reason
-                        line = line.replace('M6', '(M6)');
+                        line = line.replace(/M0*6(?!\d)/i, '(M6)');
                     }
                 }
 
@@ -489,14 +490,18 @@ class GrblHalController {
                         // Workaround for Carbide files - prevent M0 early from pausing program
                         if (sent > 10) {
                             this.workflow.pause({ data: 'M0', comment: commentString });
-                            this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`);
+                            this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`, { ignoreEvent: false });
                         }
-                        line = line.replace('M0', '(M0)');
+                        // This regex is required since M00 (or M01, M06, etc) are valid gcode commands that
+                        // some CAM programs issue. We normalize the line to M0 using `parseLine` for
+                        // comparison's sake but the line sent to the controller hasn't been normalized
+                        // and could still contain leading 0's
+                        line = line.replace(/M0+(?!\d)/i, '(M0)');
                     } else if (programMode === 'M1') {
                         log.debug(`M1 Program Pause: line=${sent + 1}, sent=${sent}, received=${received}`);
                         this.workflow.pause({ data: 'M1', comment: commentString });
-                        this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`);
-                        line = line.replace('M1', '(M1)');
+                        this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`, { ignoreEvent: false });
+                        line = line.replace(/M0*1(?!\d)/i, '(M1)');
                     }
                 }
 
@@ -512,14 +517,19 @@ class GrblHalController {
 
                     const currentState = _.get(this.state, 'status.activeState', '');
                     if (currentState === 'Check') {
-                        return line.replace('M6', '(M6)');
+                        return line.replace(/M0*6(?!\d)/i, '(M6)');
                     }
 
                     let tool = line.match(toolCommand);
+                    log.debug('Found tool');
                     if (tool && this.toolChangeContext.mappings) {
                         const remap = _.get(this.toolChangeContext.mappings, tool[2], null);
+
                         if (remap) {
+                            log.debug(`Mapping ${tool} to T${remap}`);
                             line = line.replace(tool[0], `T${remap}`);
+                        } else {
+                            log.debug(`no remap found for ${tool}`);
                         }
                     }
 
@@ -556,7 +566,7 @@ class GrblHalController {
 
                     const passthroughM6 = _.get(this.toolChangeContext, 'passthrough', false);
                     if (!passthroughM6 || toolChangeOption === 'Code') {
-                        line = line.replace('M6', '(M6)');
+                        line = line.replace(/M0*6(?!\d)/i, '(M6)');
                     }
                     //line = line.replace(`${tool?.[0]}`, `(${tool?.[0]})`);
                 }
@@ -1188,7 +1198,7 @@ class GrblHalController {
                 // Unpause sending when hold state exited using macro buttons - We check if software sender paused + state changed from hold to idle/run
                 const currentActiveState = _.get(this.state, 'status.activeState', '');
                 const runnerActiveState = _.get(this.runner.state, 'status.activeState', '');
-                if (this.workflow.isPaused &&
+                if (this.workflow.isPaused() &&
                     currentActiveState === GRBL_HAL_ACTIVE_STATE_HOLD &&
                     (runnerActiveState === GRBL_HAL_ACTIVE_STATE_IDLE || runnerActiveState === GRBL_HAL_ACTIVE_STATE_RUN)
                 ) {
@@ -1717,10 +1727,7 @@ class GrblHalController {
                 if (Number(delay)) {
                     gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${delay}`);
                 }*/
-
-                // Reset mappings on file load
                 this.toolChangeContext.mappings = {};
-
                 const ok = this.sender.load(name, gcode + '\n', context);
                 if (!ok) {
                     callback(new Error(`Invalid G-code: name=${name}`));
@@ -1843,10 +1850,12 @@ class GrblHalController {
                     modalGCode.push(`G0 G90 G21 Z${zMax + safeHeight}`);
                     // ATCI - add M6 before spindles turned on to get correct tool to spin up
                     if (atci && modal.tool !== 0) {
-                        if (this.toolChangeContext.mappings) {
+                        if (this.toolChangeContext.modal) {
                             const remap = _.get(this.toolChangeContext.mappings, modal.tool, null);
                             if (remap) {
                                 modalGCode.push(`M6 T${remap}`);
+                            } else {
+                                modalGCode.push(`M6 T${modal.tool}`);
                             }
                         } else {
                             modalGCode.push(`M6 T${modal.tool}`);
@@ -1951,8 +1960,9 @@ class GrblHalController {
                 this.command('gcode:resume');
             },
             'gcode:resume': async () => {
+                const [ignoreEvents = false] = args;
                 log.debug('gcode:resume called - program to continue sending');
-                if (this.event.hasEnabledEvent(PROGRAM_RESUME)) {
+                if (!ignoreEvents && this.event.hasEnabledEvent(PROGRAM_RESUME)) {
                     this.feederCB = () => {
                         this.write(GRBLHAL_REALTIME_COMMANDS.CYCLE_START);
                         this.workflow.resume();
@@ -2494,7 +2504,7 @@ class GrblHalController {
                         }
                         this.ymodem.sendFiles(files, this.connection.getConnectionObject());
                     } else {
-                        this.emit('ymodem:error', 'SD Card failed to mount, unable to upload files.');
+                        this.emit('ymodem:error', 'SD Card not detected, please insert an SD Card in FAT32 format, 32 GB or under, and try again');
                     }
                 }, 1500);
             },

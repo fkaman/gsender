@@ -7,6 +7,7 @@ export interface WizardStep {
     secondaryContent?: SecondaryContent[];
     contextProvider?: ComponentType<{ children: ReactNode }>;
     fillPrimaryContent?: boolean;
+    autoComplete?: () => boolean;
 }
 
 export interface StepProps {
@@ -17,7 +18,7 @@ export interface StepProps {
 }
 
 export interface SecondaryContent {
-    type: 'image' | 'component' | 'link';
+    type: 'image' | 'component' | 'link' | 'video';
     content: string | ComponentType<any>;
     title?: string;
     url?: string;
@@ -34,13 +35,14 @@ export interface SubWizard {
     steps: WizardStep[];
     icon?: ComponentType<any>;
     completionPage?: ComponentType<any>;
+    completionImage?: string;
     secondaryContentLeft?: boolean;
     hideVersionPrintout?: boolean;
 }
 
 export interface ValidationResult {
     success: boolean;
-    reason?: string;
+    reason?: ReactNode;
 }
 
 export interface Wizard {
@@ -49,4 +51,5 @@ export interface Wizard {
     image?: string;
     subWizards: SubWizard[];
     validations: (() => ValidationResult)[];
+    helpUrl?: string;
 }

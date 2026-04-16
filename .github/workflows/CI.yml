@@ -21,6 +21,7 @@ jobs:
   build-linux:
     name: Build Linux packages
     runs-on: ubuntu-latest
+    environment: CI
     permissions:
       contents: write
     steps:
@@ -131,6 +132,7 @@ jobs:
 
   build-windows:
     name: Build Windows packages
+    environment: CI
     runs-on: windows-latest
     permissions:
       contents: write

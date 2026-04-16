@@ -123,6 +123,7 @@ export interface Workspace {
             showVisually: boolean;
         };
         showKeyboardMap: boolean;
+        displayScaleFactor?: string;
     };
     preventJoggingPastLimits: boolean;
 }
