@@ -1830,7 +1830,10 @@ export const SettingsMenu: SettingsMenuSection[] = [
                                 'workspace.toolChange.moveToManualPosition',
                                 false,
                             );
-                            return strategy !== 'Fixed Tool Sensor' || !moveToLocation;
+                            return (
+                                strategy !== 'Fixed Tool Sensor' ||
+                                !moveToLocation
+                            );
                         },
                     },
                     {
@@ -2116,7 +2119,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description: 'Play sound when a job finishes.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2128,7 +2133,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                             'Play sound when the machine enters an alarm state.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2136,10 +2143,13 @@ export const SettingsMenu: SettingsMenuSection[] = [
                     {
                         label: 'Tool change sound',
                         key: 'workspace.accessibility.audioCues.toolChange',
-                        description: 'Play sound when a tool change is required.',
+                        description:
+                            'Play sound when a tool change is required.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2150,7 +2160,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description: 'Play sound after a successful probe.',
                         type: 'boolean',
                         hidden: () =>
-                            !store.get('workspace.accessibility.audioCues.enabled'),
+                            !store.get(
+                                'workspace.accessibility.audioCues.enabled',
+                            ),
                         onUpdate: () => {
                             pubsub.publish('accessibility:update');
                         },
@@ -2198,6 +2210,41 @@ export const SettingsMenu: SettingsMenuSection[] = [
                             'Choose between a slider or a number input for adjusting spindle speed.',
                         options: ['Slider', 'Number'],
                         defaultValue: 'Slider',
+                    },
+                    {
+                        label: 'App display scale',
+                        key: 'workspace.accessibility.displayScaleFactor',
+                        type: 'select',
+                        options: [
+                            '50%',
+                            '67%',
+                            '75%',
+                            '100%',
+                            '125%',
+                            '150%',
+                            '175%',
+                            '200%',
+                        ],
+                        defaultValue: '100%',
+                        description:
+                            "Override the app's display scale independently of your OS' DPI settings.",
+                        hidden: () => !isElectron(),
+                        onUpdate: () => {
+                            if (isElectron()) {
+                                const scaleFactorStr = store.get(
+                                    'workspace.accessibility.displayScaleFactor',
+                                    '100%',
+                                );
+                                // Normalize percentage to decimal (e.g., "100%" -> 1.0)
+                                const scaleFactor =
+                                    parseFloat(scaleFactorStr) / 100;
+                                // @ts-ignore
+                                window.ipcRenderer.send(
+                                    'save-display-scale',
+                                    scaleFactor,
+                                );
+                            }
+                        },
                     },
                 ],
             },
