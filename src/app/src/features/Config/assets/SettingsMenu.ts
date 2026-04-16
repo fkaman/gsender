@@ -2215,6 +2215,41 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         options: ['Slider', 'Number'],
                         defaultValue: 'Slider',
                     },
+                    {
+                        label: 'App display scale',
+                        key: 'workspace.accessibility.displayScaleFactor',
+                        type: 'select',
+                        options: [
+                            '50%',
+                            '67%',
+                            '75%',
+                            '100%',
+                            '125%',
+                            '150%',
+                            '175%',
+                            '200%',
+                        ],
+                        defaultValue: '100%',
+                        description:
+                            "Override the app's display scale independently of your OS' DPI settings.",
+                        hidden: () => !isElectron(),
+                        onUpdate: () => {
+                            if (isElectron()) {
+                                const scaleFactorStr = store.get(
+                                    'workspace.accessibility.displayScaleFactor',
+                                    '100%',
+                                );
+                                // Normalize percentage to decimal (e.g., "100%" -> 1.0)
+                                const scaleFactor =
+                                    parseFloat(scaleFactorStr) / 100;
+                                // @ts-ignore
+                                window.ipcRenderer.send(
+                                    'save-display-scale',
+                                    scaleFactor,
+                                );
+                            }
+                        },
+                    },
                 ],
             },
             {
