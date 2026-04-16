@@ -1805,6 +1805,26 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         },
                     },
                     {
+                        label: 'First tool behaviour',
+                        type: 'select',
+                        key: 'workspace.toolChange.firstToolBehaviour',
+                        description:
+                            'Control how the first tool change is handled. Many CAM programs add an initial tool change command even when you already have the tool loaded.\n\n"Always run full wizard" runs the complete tool change process.\n\n"Prompt for first tool" asks whether to run the full wizard or just probe the current tool length.\n\n"Always probe length only" skips the tool change and only measures the current tool.',
+                        options: [
+                            'Always run full wizard',
+                            'Prompt for first tool',
+                            'Always probe length only',
+                        ],
+                        defaultValue: 'Always run full wizard',
+                        hidden: (getPending) => {
+                            const strategy = getPending(
+                                'workspace.toolChangeOption',
+                                '',
+                            );
+                            return strategy !== 'Fixed Tool Sensor';
+                        },
+                    },
+                    {
                         label: 'Set tool change location',
                         type: 'boolean',
                         key: 'workspace.toolChange.moveToManualPosition',
