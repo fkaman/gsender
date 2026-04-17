@@ -15,6 +15,9 @@ import { useWorkspaceState } from 'app/hooks/useWorkspaceState';
 import { useTypedSelector } from 'app/hooks/useTypedSelector';
 import { METRIC_UNITS } from 'app/constants';
 import Tooltip from 'app/components/Tooltip';
+import store from 'app/store';
+import { get } from 'lodash';
+import { RootState } from 'app/store/redux';
 
 interface GotoProps {
     units: string;
@@ -26,7 +29,9 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
     const { mode } = useWorkspaceState();
     const [hasAAxisReported, setHasAAxisReported] = useState<boolean>(false);
 
-    const axes = useTypedSelector((state: RootState) => state.controller.state.axes?.axes);
+    const axes = useTypedSelector(
+        (state: RootState) => state.controller.state.axes?.axes,
+    );
     const controllerType = useTypedSelector((state) => state.controller.type);
     const [relativeMovement, setRelativeMovement] = useState(false);
     const [movementPos, setMovementPos] = useState({
@@ -68,7 +73,8 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
     }, [relativeMovement]);
 
     const isInRotaryMode = mode === 'ROTARY';
-    const aAxisIsAvailable = isInRotaryMode || (controllerType === 'grblHAL' && hasAAxisReported);
+    const aAxisIsAvailable =
+        isInRotaryMode || (controllerType === 'grblHAL' && hasAAxisReported);
     const yAxisIsAvailable = !isInRotaryMode;
 
     const onToggleSwap = () => {
@@ -79,6 +85,13 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
         const code = [];
         const unitModal = units === METRIC_UNITS ? 'G21' : 'G20';
         const movementModal = relativeMovement ? 'G91' : 'G90'; // Is G91 enabled?
+
+        const retractHeight = Number(
+            store.get('workspace.safeRetractHeight', -1),
+        );
+        const settings = get(controller.settings, 'settings', {});
+        const homingSetting = Number(get(settings, '$22', 0));
+        const homingEnabled = homingSetting !== 0;
 
         // Build axis commands based on non-zero values
         const axes = [];
@@ -96,7 +109,33 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
 
         // Only add movement command if there are axes to move
         if (axes.length > 0) {
+            if (retractHeight !== 0) {
+                if (homingEnabled) {
+                    const currentZ = Number(
+                        get(controller, 'state.status.mpos.z', 0),
+                    );
+                    const retract = Math.abs(retractHeight) * -1;
+                    // only move Z if it is less than Z0-SafeHeight
+                    if (currentZ < retract) {
+                        code.push(`G53 G0 Z${retract}`);
+                    }
+                } else {
+                    code.push('G91');
+                    code.push(`G0Z${retractHeight}`);
+                }
+            }
+
             code.push(movementModal, `G0 ${axes.join(' ')}`);
+
+            // if relative, move z back down safe height
+            if (
+                retractHeight !== 0 &&
+                !homingEnabled &&
+                movementModal === 'G91'
+            ) {
+                code.push(`G91 G0 Z${retractHeight * -1}`);
+                code.push('G90');
+            }
         }
 
         controller.command('gcode:safe', code, unitModal);
@@ -184,8 +223,8 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                         disabled={!aAxisIsAvailable}
                     />
 
-                    <Button 
-                        variant="alt" 
+                    <Button
+                        variant="alt"
                         onClick={goToLocation}
                         aria-label="Execute move to location"
                     >
