@@ -79,7 +79,8 @@ const ControlButton: React.FC<ControlButtonProps> = ({
         (state: RootState) => state.controller.state.status?.SD?.name,
     );
     useEffect(() => {
-        if (sdRunReported !== null) {
+        if (sdRunReported !== null && sdRunReported !== undefined) {
+            console.log('setting true')
             setIsRunningSDFile(true);
         } else {
             setIsRunningSDFile(false);
@@ -93,6 +94,8 @@ const ControlButton: React.FC<ControlButtonProps> = ({
         const currentActiveState = reduxActiveState || activeState;
         const currentWorkflow = reduxWorkflow || workflow;
         const { state } = currentWorkflow;
+        console.log(!isRunningSDFile);
+        console.log('SD:', isRunningSDFile);
         return (
             !isRunningSDFile &&
             (currentActiveState === GRBL_ACTIVE_STATE_IDLE ||
