@@ -87,6 +87,7 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
                     dialogDescription="Enter the G-code commands to run for this event."
                     showNameField={false}
                     showDescriptionField={false}
+                    allowEmptyContent
                     submitLabel="Save"
                     onSubmit={({ content }) => {
                         saveCommands(content).catch(() => {
