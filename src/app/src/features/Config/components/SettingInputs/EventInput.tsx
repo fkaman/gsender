@@ -64,7 +64,6 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
             const event = recordMap.get(eventType) as EventData | undefined;
 
             if (event) {
-                console.log({ event });
                 const { commands } = event;
                 setEventData(event);
                 commands && setCommands(commands);
