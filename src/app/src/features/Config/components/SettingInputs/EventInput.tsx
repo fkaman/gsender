@@ -9,12 +9,22 @@ interface EventInputProps {
     eventType: string;
 }
 
+interface EventData {
+    id: string;
+    event: string;
+    trigger: string;
+    commands: string;
+    enabled: boolean;
+    mtime: number;
+}
+
 export function EventInput({ eventType }: EventInputProps): React.ReactElement {
-    const [eventData, setEventData] = useState<any>({});
+    const [eventData, setEventData] = useState<EventData | null>(null);
     const [eventCommands, setCommands] = useState('');
     const [isEditing, setIsEditing] = useState(false);
 
     async function toggleEvent() {
+        if (!eventData) return;
         const event = { ...eventData };
 
         try {
@@ -30,7 +40,7 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
     }
 
     async function saveCommands(commands: string) {
-        if (eventData.hasOwnProperty('id')) {
+        if (eventData?.id) {
             await api.events.update(eventType, { commands });
             setCommands(commands);
         } else {
@@ -51,9 +61,11 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
             const response = await api.events.fetch();
             const { records: jsonRecords } = response.data;
             const recordMap = new Map(Object.entries(jsonRecords));
-            const event = recordMap.get(eventType);
+            const event = recordMap.get(eventType) as EventData | undefined;
+
             if (event) {
-                const { commands } = event as any;
+                console.log({ event });
+                const { commands } = event;
                 setEventData(event);
                 commands && setCommands(commands);
             }
@@ -89,7 +101,10 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
             )}
             <div className="flex flex-row justify-between items-center">
                 <span>Enabled:</span>
-                <Switch checked={eventData.enabled} onChange={toggleEvent} />
+                <Switch
+                    checked={eventData?.enabled ?? false}
+                    onChange={toggleEvent}
+                />
             </div>
             <textarea
                 readOnly
