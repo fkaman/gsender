@@ -113,7 +113,7 @@ class GrblController {
         },
         close: (err) => {
             this.ready = false;
-            const received = this.sender?.state?.received;
+            const currentLineRunning = this.sender?.state?.totalSentToQueue - this.sender?.state?.countdownQueue.length;
             if (err) {
                 log.warn(`Disconnected from serial port "${this.options.port}":`, err);
             }
@@ -125,7 +125,7 @@ class GrblController {
 
                 // Destroy controller
                 this.destroy();
-            }, received);
+            }, currentLineRunning);
         },
         error: (err) => {
             this.ready = false;
@@ -1323,7 +1323,7 @@ class GrblController {
         }, 500);
     }
 
-    close(callback, received) {
+    close(callback, currentLineRunning) {
         const { port } = this.options;
 
         // Assertion check
@@ -1342,7 +1342,7 @@ class GrblController {
         this.emit('serialport:closeController', {
             port: port,
             inuse: false,
-        }, received);
+        }, currentLineRunning);
 
         if (this.isClose()) {
             callback(null);

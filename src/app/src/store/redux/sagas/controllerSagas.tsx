@@ -565,12 +565,12 @@ export function* initialize(): Generator<any, void, any> {
 
     controller.addListener(
         'serialport:closeController',
-        (_options: SerialPortOptions, received: number) => {
+        (_options: SerialPortOptions, currentLineRunning: number) => {
             // if the connection was closed unexpectedly (not by the user),
             // the number of lines sent will be defined.
             // create a pop up so the user can connect to the last active port
             // and resume from the last line
-            if (received) {
+            if (currentLineRunning) {
                 const homingEnabled: string = _get(
                     reduxStore.getState(),
                     'controller.settings.settings.$22',
@@ -582,7 +582,7 @@ export function* initialize(): Generator<any, void, any> {
                         : 'The machine connection has been disrupted. To attempt to reconnect to the last active port, ' +
                           'press Resume. After that, you can set your Workspace 0 and use the Start From Line function to continue the job. ' +
                           'Suggested line to start from: ' +
-                          received;
+                          currentLineRunning;
 
                 const content = (
                     <div>
@@ -600,7 +600,7 @@ export function* initialize(): Generator<any, void, any> {
                         connectToLastDevice(() => {
                             // prompt recovery, either with homing or a prompt to start from line
                             pubsub.publish('disconnect:recovery', {
-                                received,
+                                currentLineRunning,
                                 homingEnabled,
                             });
                         });
