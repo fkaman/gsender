@@ -9,7 +9,6 @@ import {
 import { Button } from 'app/components/Button';
 import { UnitInput } from 'app/components/UnitInput';
 import { DROPosition } from 'app/features/DRO/utils/DRO';
-import Switch from 'app/components/Switch';
 import controller from 'app/lib/controller';
 import { useWorkspaceState } from 'app/hooks/useWorkspaceState';
 import { useTypedSelector } from 'app/hooks/useTypedSelector';
@@ -18,6 +17,8 @@ import Tooltip from 'app/components/Tooltip';
 import store from 'app/store';
 import { get } from 'lodash';
 import { RootState } from 'app/store/redux';
+
+type MovementMode = 'abs' | 'inc' | 'mcs';
 
 interface GotoProps {
     units: string;
@@ -33,7 +34,13 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
         (state: RootState) => state.controller.state.axes?.axes,
     );
     const controllerType = useTypedSelector((state) => state.controller.type);
-    const [relativeMovement, setRelativeMovement] = useState(false);
+    const hasHomed = useTypedSelector((state: RootState) => state.controller.hasHomed);
+    const homingSetting = useTypedSelector((state: RootState) =>
+        Number(get(state, 'controller.settings.settings.$22', 0))
+    );
+    const mcsAvailable = hasHomed && homingSetting !== 0;
+
+    const [movementMode, setMovementMode] = useState<MovementMode>('abs');
     const [movementPos, setMovementPos] = useState({
         x: 0,
         y: 0,
@@ -52,16 +59,9 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
     }, [axes]);
 
     useEffect(() => {
-        if (relativeMovement) {
-            setMovementPos({
-                x: 0,
-                y: 0,
-                z: 0,
-                a: 0,
-                b: 0,
-                c: 0,
-            });
-        } else {
+        if (movementMode === 'inc') {
+            setMovementPos({ x: 0, y: 0, z: 0, a: 0, b: 0, c: 0 });
+        } else if (movementMode === 'abs') {
             setMovementPos({
                 ...movementPos,
                 x: Number(wpos.x),
@@ -69,53 +69,65 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                 z: Number(wpos.z),
                 a: Number(wpos.a),
             });
+        } else if (movementMode === 'mcs') {
+            const mpos = get(controller, 'state.status.mpos', {});
+            setMovementPos({
+                ...movementPos,
+                x: Number(mpos.x ?? 0),
+                y: Number(mpos.y ?? 0),
+                z: Number(mpos.z ?? 0),
+                a: Number(mpos.a ?? 0),
+            });
         }
-    }, [relativeMovement]);
+    }, [movementMode]);
+
+    // If MCS becomes unavailable while selected, fall back to abs
+    useEffect(() => {
+        if (movementMode === 'mcs' && !mcsAvailable) {
+            setMovementMode('abs');
+        }
+    }, [mcsAvailable]);
 
     const isInRotaryMode = mode === 'ROTARY';
     const aAxisIsAvailable =
         isInRotaryMode || (controllerType === 'grblHAL' && hasAAxisReported);
     const yAxisIsAvailable = !isInRotaryMode;
 
-    const onToggleSwap = () => {
-        setRelativeMovement((prev) => !prev);
+    const onModeChange = (newMode: MovementMode) => {
+        setMovementMode(newMode);
     };
 
     function goToLocation() {
         const code = [];
         const unitModal = units === METRIC_UNITS ? 'G21' : 'G20';
-        const movementModal = relativeMovement ? 'G91' : 'G90'; // Is G91 enabled?
 
-        const retractHeight = Number(
-            store.get('workspace.safeRetractHeight', -1),
-        );
-        const settings = get(controller.settings, 'settings', {});
-        const homingSetting = Number(get(settings, '$22', 0));
-        const homingEnabled = homingSetting !== 0;
-
-        // Build axis commands based on non-zero values
-        const axes = [];
-        axes.push(`X${movementPos.x}`);
-
+        const axisValues = [];
+        axisValues.push(`X${movementPos.x}`);
         if (yAxisIsAvailable) {
-            axes.push(`Y${movementPos.y}`);
+            axisValues.push(`Y${movementPos.y}`);
         }
-
-        axes.push(`Z${movementPos.z}`);
-
+        axisValues.push(`Z${movementPos.z}`);
         if (aAxisIsAvailable) {
-            axes.push(`A${movementPos.a}`);
+            axisValues.push(`A${movementPos.a}`);
         }
 
-        // Only add movement command if there are axes to move
-        if (axes.length > 0) {
+        if (axisValues.length === 0) {
+            return;
+        }
+
+        if (movementMode === 'mcs') {
+            code.push(`G53 G0 ${axisValues.join(' ')}`);
+        } else {
+            const movementModal = movementMode === 'inc' ? 'G91' : 'G90';
+            const retractHeight = Number(store.get('workspace.safeRetractHeight', -1));
+            const settings = get(controller.settings, 'settings', {});
+            const homingSettingVal = Number(get(settings, '$22', 0));
+            const homingEnabled = homingSettingVal !== 0;
+
             if (retractHeight !== 0) {
                 if (homingEnabled) {
-                    const currentZ = Number(
-                        get(controller, 'state.status.mpos.z', 0),
-                    );
+                    const currentZ = Number(get(controller, 'state.status.mpos.z', 0));
                     const retract = Math.abs(retractHeight) * -1;
-                    // only move Z if it is less than Z0-SafeHeight
                     if (currentZ < retract) {
                         code.push(`G53 G0 Z${retract}`);
                     }
@@ -125,14 +137,9 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                 }
             }
 
-            code.push(movementModal, `G0 ${axes.join(' ')}`);
+            code.push(movementModal, `G0 ${axisValues.join(' ')}`);
 
-            // if relative, move z back down safe height
-            if (
-                retractHeight !== 0 &&
-                !homingEnabled &&
-                movementModal === 'G91'
-            ) {
+            if (retractHeight !== 0 && !homingEnabled && movementModal === 'G91') {
                 code.push(`G91 G0 Z${retractHeight * -1}`);
                 code.push('G90');
             }
@@ -143,21 +150,21 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
 
     function onValueEdit(e: React.ChangeEvent<HTMLInputElement>, axis: string) {
         const value = e.target.value;
-        const payload = {
-            ...movementPos,
-            [axis]: value,
-        };
-        setMovementPos(payload);
+        setMovementPos({ ...movementPos, [axis]: value });
     }
+
     function onPopoverOpen(open: boolean) {
         if (open) {
-            if (relativeMovement) {
+            if (movementMode === 'inc') {
+                setMovementPos({ ...movementPos, x: 0, y: 0, z: 0, a: 0 });
+            } else if (movementMode === 'mcs') {
+                const mpos = get(controller, 'state.status.mpos', {});
                 setMovementPos({
                     ...movementPos,
-                    x: Number(0),
-                    y: Number(0),
-                    z: Number(0),
-                    a: Number(0),
+                    x: Number(mpos.x ?? 0),
+                    y: Number(mpos.y ?? 0),
+                    z: Number(mpos.z ?? 0),
+                    a: Number(mpos.a ?? 0),
                 });
             } else {
                 setMovementPos({
@@ -170,6 +177,12 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
             }
         }
     }
+
+    const modeLabels: { key: MovementMode; label: string }[] = [
+        { key: 'abs', label: 'ABS' },
+        { key: 'inc', label: 'INC' },
+        ...(homingSetting !== 0 ? [{ key: 'mcs' as MovementMode, label: 'MCS' }] : []),
+    ];
 
     return (
         <Popover onOpenChange={onPopoverOpen}>
@@ -187,14 +200,25 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
             <PopoverContent className="bg-white">
                 <div className="w-full gap-2 flex flex-col">
                     <h1>Go To Location</h1>
-                    <div className="flex flex-row text-sm text-gray-400 justify-between">
-                        <span>ABS</span>
-                        <Switch
-                            checked={relativeMovement}
-                            onChange={onToggleSwap}
-                            aria-label="Toggle between Absolute and Incremental movement"
-                        />
-                        <span>INC</span>
+                    <div className="flex flex-row text-sm border rounded overflow-hidden">
+                        {modeLabels.map(({ key, label }) => {
+                            const isActive = movementMode === key;
+                            const isDisabled = key === 'mcs' && !mcsAvailable;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => !isDisabled && onModeChange(key)}
+                                    className={`flex-1 py-1 text-xs font-medium transition-colors
+                                        ${isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}
+                                        ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                    disabled={isDisabled}
+                                    title={isDisabled ? 'Requires homing enabled ($22>0) and machine homed' : label}
+                                    aria-pressed={isActive}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
                     </div>
                     <UnitInput
                         units={units}
