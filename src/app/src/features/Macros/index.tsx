@@ -440,6 +440,8 @@ const MacroWidget = ({
                     macroName={editMacro?.name}
                     macroContent={editMacro?.content}
                     macroDescription={editMacro?.description}
+                    title={modal.name === MODAL_EDIT_MACRO ? 'Edit Macro' : 'Add Macro'}
+                    submitLabel={modal.name === MODAL_EDIT_MACRO ? 'Update Macro' : 'Add New Macro'}
                 />
             )}
 
