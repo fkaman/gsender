@@ -2142,7 +2142,9 @@ class GrblHalController {
                 }
             },
             'lasertest:on': () => {
-                const [power = 0, duration = 0, maxS = 1000] = args;
+                const [power = 0, duration = 0] = args;
+
+                const maxS = Number(this.runner.getSetting('$730', 255));
                 const commands = [
                     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Laser-Mode
                     // The laser will only turn on when Grbl is in a G1, G2, or G3 motion mode.
