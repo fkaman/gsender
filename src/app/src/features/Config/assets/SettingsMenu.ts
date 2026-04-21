@@ -249,6 +249,28 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         options: OUTLINE_MODES,
                     },
                     {
+                        label: 'Power Saving',
+                        key: 'workspace.powerSaving',
+                        type: 'boolean',
+                        description: 'Allow screen to blank/sleep.',
+                        onEnable: () => {
+                            if (isElectron()) {
+                                window.ipcRenderer.send(
+                                    'change-power-saving',
+                                    true,
+                                );
+                            }
+                        },
+                        onDisable: () => {
+                            if (isElectron()) {
+                                window.ipcRenderer.send(
+                                    'change-power-saving',
+                                    false,
+                                );
+                            }
+                        },
+                    },
+                    {
                         label: 'Prompt on exit',
                         key: 'workspace.promptExit',
                         type: 'boolean',
