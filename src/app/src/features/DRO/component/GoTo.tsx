@@ -34,9 +34,11 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
         (state: RootState) => state.controller.state.axes?.axes,
     );
     const controllerType = useTypedSelector((state) => state.controller.type);
-    const hasHomed = useTypedSelector((state: RootState) => state.controller.hasHomed);
+    const hasHomed = useTypedSelector(
+        (state: RootState) => state.controller.hasHomed,
+    );
     const homingSetting = useTypedSelector((state: RootState) =>
-        Number(get(state, 'controller.settings.settings.$22', 0))
+        Number(get(state, 'controller.settings.settings.$22', 0)),
     );
     const mcsAvailable = hasHomed && homingSetting !== 0;
 
@@ -106,7 +108,6 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
         if (yAxisIsAvailable) {
             axisValues.push(`Y${movementPos.y}`);
         }
-        axisValues.push(`Z${movementPos.z}`);
         if (aAxisIsAvailable) {
             axisValues.push(`A${movementPos.a}`);
         }
@@ -119,14 +120,18 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
             code.push(`G53 G0 ${axisValues.join(' ')}`);
         } else {
             const movementModal = movementMode === 'inc' ? 'G91' : 'G90';
-            const retractHeight = Number(store.get('workspace.safeRetractHeight', -1));
+            const retractHeight = Number(
+                store.get('workspace.safeRetractHeight', -1),
+            );
             const settings = get(controller.settings, 'settings', {});
             const homingSettingVal = Number(get(settings, '$22', 0));
             const homingEnabled = homingSettingVal !== 0;
 
             if (retractHeight !== 0) {
                 if (homingEnabled) {
-                    const currentZ = Number(get(controller, 'state.status.mpos.z', 0));
+                    const currentZ = Number(
+                        get(controller, 'state.status.mpos.z', 0),
+                    );
                     const retract = Math.abs(retractHeight) * -1;
                     if (currentZ < retract) {
                         code.push(`G53 G0 Z${retract}`);
@@ -139,9 +144,18 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
 
             code.push(movementModal, `G0 ${axisValues.join(' ')}`);
 
-            if (retractHeight !== 0 && !homingEnabled && movementModal === 'G91') {
-                code.push(`G91 G0 Z${retractHeight * -1}`);
+            // if relative, move z back down safe height
+            if (
+                retractHeight !== 0 &&
+                !homingEnabled &&
+                movementModal === 'G91'
+            ) {
+                const zMove =
+                    Number(movementPos.z) + Number(retractHeight) * -1;
+                code.push(`G91 G0 Z${zMove}`);
                 code.push('G90');
+            } else {
+                code.push(movementModal, `G0 Z${movementPos.z}`);
             }
         }
 
@@ -181,7 +195,9 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
     const modeLabels: { key: MovementMode; label: string }[] = [
         { key: 'abs', label: 'ABS' },
         { key: 'inc', label: 'INC' },
-        ...(homingSetting !== 0 ? [{ key: 'mcs' as MovementMode, label: 'MCS' }] : []),
+        ...(homingSetting !== 0
+            ? [{ key: 'mcs' as MovementMode, label: 'MCS' }]
+            : []),
     ];
 
     return (
@@ -207,12 +223,18 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                             return (
                                 <button
                                     key={key}
-                                    onClick={() => !isDisabled && onModeChange(key)}
+                                    onClick={() =>
+                                        !isDisabled && onModeChange(key)
+                                    }
                                     className={`flex-1 py-1 text-xs font-medium transition-colors
                                         ${isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}
                                         ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                                     disabled={isDisabled}
-                                    title={isDisabled ? 'Requires homing enabled ($22>0) and machine homed' : label}
+                                    title={
+                                        isDisabled
+                                            ? 'Requires homing enabled ($22>0) and machine homed'
+                                            : label
+                                    }
                                     aria-pressed={isActive}
                                 >
                                     {label}
