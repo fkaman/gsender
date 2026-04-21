@@ -207,6 +207,8 @@ class GrblController {
 
     homingFlagSet = false;
 
+    hasHomedSet = false;
+
     // eslint-disable-next-line max-lines-per-function
     constructor(engine, connection, options) {
         if (!engine) {
@@ -665,6 +667,10 @@ class GrblController {
                 this.homingFlagSet = determineMachineZeroFlagSet(res, this.settings);
                 this.emit('homing:flag', this.homingFlagSet);
                 this.homingStarted = false;
+                if (!this.hasHomedSet) {
+                    this.hasHomedSet = true;
+                    this.emit('homing:has-homed', true);
+                }
             }
 
             this.actionMask.queryStatusReport = false;
@@ -1399,6 +1405,7 @@ class GrblController {
             // workflow state
             socket.emit('workflow:state', this.workflow.state);
         }
+        socket.emit('homing:has-homed', this.hasHomedSet);
     }
 
     emit(eventName, ...args) {
