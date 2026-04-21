@@ -3,9 +3,8 @@ import App from '../App';
 import * as user from 'app/lib/user';
 import * as sagaModule from 'app/store/redux/sagas';
 import store from 'app/store';
-jest.spyOn(store, 'get');
 
-// Mocks 
+// Mocks
 jest.mock('app/store/redux', () => ({
     store: {
         getState: () => ({
@@ -20,6 +19,7 @@ jest.mock('app/store/redux', () => ({
         subscribe: jest.fn(() => jest.fn()),
     },
 }));
+
 jest.mock('app/store/redux/sagas', () => ({
     default: jest.fn(),
     sagaMiddleware: { run: jest.fn() },
@@ -41,10 +41,16 @@ jest.mock('../react-routes', () => ({
     ReactRoutes: () => <div data-testid="react-routes" />,
 }));
 
+// Fix: separate mock for AccessibilitySettingsHandler (different import path)
+jest.mock('../features/Helper/AccessibilitySettingsHandler', () => ({
+    AccessibilitySettingsHandler: () => null,
+}));
+
 jest.mock('../components/shadcn/Sonner', () => ({
     Toaster: () => <div data-testid="toaster" />,
 }));
 
+// Fix: only one spyOn (duplicate removed)
 jest.spyOn(store, 'get');
 
 // ─── Must Have Test Cases ------------------
@@ -78,7 +84,7 @@ it('validates saved session token on startup', async () => {
     // to check whether the previous CNC session is still valid
     render(<App />);
     await waitFor(() => {
-        expect(user.signin).toHaveBeenCalledWith({ token: "" });
+        expect(user.signin).toHaveBeenCalledWith({ token: '' });
     });
 });
 
