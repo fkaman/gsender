@@ -607,6 +607,13 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         ],
                     },
                     {
+                        label: 'Show touch plate switcher',
+                        key: 'widgets.probe.touchplateTypeSwitcher',
+                        description:
+                            'Show a button on Probe tab to allow switching between touch plate types.',
+                        type: 'boolean',
+                    },
+                    {
                         label: 'Tip diameter',
                         key: 'widgets.probe.tipDiameter3D',
                         description:

@@ -321,6 +321,7 @@ const defaultState: State = {
             minimized: false,
             probeCommand: 'G38.2',
             connectivityTest: true,
+            touchplateTypeSwitcher: false,
             useTLO: false,
             probeDepth: 10,
             probeFeedrate: 75,
