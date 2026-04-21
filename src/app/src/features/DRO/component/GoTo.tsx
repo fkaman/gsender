@@ -132,6 +132,7 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                     const currentZ = Number(
                         get(controller, 'state.status.mpos.z', 0),
                     );
+                    console.log('currentZ', currentZ);
                     const retract = Math.abs(retractHeight) * -1;
                     if (currentZ < retract) {
                         code.push(`G53 G0 Z${retract}`);

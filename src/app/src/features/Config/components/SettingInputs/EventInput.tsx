@@ -48,7 +48,7 @@ export function EventInput({ eventType }: EventInputProps): React.ReactElement {
                 event: eventType,
                 trigger: 'gcode',
                 commands,
-                enabled: false,
+                enabled: true,
             });
             const { record } = res.data;
             setEventData(record);
