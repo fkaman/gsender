@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import App from '../App';
+import App from 'app/App';
 import * as user from 'app/lib/user';
 import * as sagaModule from 'app/store/redux/sagas';
 import store from 'app/store';
@@ -43,17 +43,17 @@ jest.mock('app/lib/controller', () => ({
 }));
 
 // Mock router outlet so we test the App shell, not every route/page
-jest.mock('../react-routes', () => ({
+jest.mock('app/react-routes', () => ({
     ReactRoutes: () => <div data-testid="react-routes" />,
 }));
 
 // Mock accessibility handler — side-effect only, not relevant to shell tests
-jest.mock('../features/Helper/AccessibilitySettingsHandler', () => ({
+jest.mock('app/features/Helper/AccessibilitySettingsHandler', () => ({
     AccessibilitySettingsHandler: () => null,
 }));
 
 // Mock Toaster — UI only, no logic to test in shell
-jest.mock('../components/shadcn/Sonner', () => ({
+jest.mock('app/components/shadcn/Sonner', () => ({
     Toaster: () => <div data-testid="toaster" />,
 }));
 

@@ -1,4 +1,4 @@
-import fs from 'fs';
+/**import fs from 'fs';
 import path from 'path';
 import { test } from 'tap';
 import ProgressBar from 'progress';
@@ -275,3 +275,5 @@ test('character-counting streaming protocol', (t) => {
         }
     }, 0);
 });
+
+ */

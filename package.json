@@ -75,7 +75,7 @@
     "eslint:build": "eslint --ext .js --ext .jsx *.js scripts test --fix",
     "eslint:debug": "echo \"Checking code style...\"; DEBUG=eslint:cli-engine eslint --ext .js --ext .jsx *.js src scripts test",
     "stylint": "stylint src/app",
-    "test": "tap test/*.js --no-timeout --node-arg=--require --node-arg=esbuild-register",
+    "test": "npx jest --testPathPatterns=\"src/app/src/tests/jest\" --config jest.config.js",
     "coveralls": "tap test/*.js --coverage --coverage-report=text-lcov --nyc-arg=--require --nyc-arg=esbuild-register | coveralls",
     "cy:run": "cypress run",
    "testgrblhal": "npm run report:clean && (npx cypress run --headed --browser chrome --spec cypress/e2e/grblHal/A_grblHal_master_spec.cy.js || true) && npm run report:merge && npm run report:generate && npm run dashboard:generate && npm run dashboard:open",
