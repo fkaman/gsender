@@ -4,7 +4,9 @@ import * as user from 'app/lib/user';
 import * as sagaModule from 'app/store/redux/sagas';
 import store from 'app/store';
 
-// Mocks
+// ─── Mocks 
+
+// Mock Redux store so App doesn't need real state or reducers
 jest.mock('app/store/redux', () => ({
     store: {
         getState: () => ({
@@ -20,11 +22,13 @@ jest.mock('app/store/redux', () => ({
     },
 }));
 
+// Mock sagas so no real background tasks run during tests
 jest.mock('app/store/redux/sagas', () => ({
     default: jest.fn(),
     sagaMiddleware: { run: jest.fn() },
 }));
 
+// Mock user auth so no real network/auth calls are made
 jest.mock('app/lib/user', () => ({
     __esModule: true,
     signin: jest.fn(() =>
@@ -32,41 +36,59 @@ jest.mock('app/lib/user', () => ({
     ),
 }));
 
+// Mock controller so no real serial/socket connections are attempted
 jest.mock('app/lib/controller', () => ({
     __esModule: true,
     default: { connect: jest.fn() },
 }));
 
+// Mock router outlet so we test the App shell, not every route/page
 jest.mock('../react-routes', () => ({
     ReactRoutes: () => <div data-testid="react-routes" />,
 }));
 
-// Fix: separate mock for AccessibilitySettingsHandler (different import path)
+// Mock accessibility handler — side-effect only, not relevant to shell tests
 jest.mock('../features/Helper/AccessibilitySettingsHandler', () => ({
     AccessibilitySettingsHandler: () => null,
 }));
 
+// Mock Toaster — UI only, no logic to test in shell
 jest.mock('../components/shadcn/Sonner', () => ({
     Toaster: () => <div data-testid="toaster" />,
 }));
 
-// Fix: only one spyOn (duplicate removed)
-jest.spyOn(store, 'get');
+// ─── Setup 
 
-// ─── Must Have Test Cases ------------------
+// Spy on store.get and return a stable token value
+// This also fixes the semver warning caused by undefined version in store/index.ts
+jest.spyOn(store, 'get').mockReturnValue('');
+
+// Clear all mocks between tests to prevent state leakage
+beforeEach(() => {
+    jest.clearAllMocks();
+    // Re-apply store.get mock after clearAllMocks resets it
+    jest.spyOn(store, 'get').mockReturnValue('');
+});
+
+// ─── Reusable render helper
+// Use this in future tests instead of calling render(<App />) directly.
+// Keeps tests consistent and makes it easy to add global providers later.
+const renderApp = () => render(<App />);
+
+// ─── Must Have Test Cases
 
 // Test 1 - App renders without crashing
 it('renders App.tsx without crashing', () => {
     // Verifies that the root App component mounts successfully
     // without throwing any errors or exceptions on startup
-    expect(() => render(<App />)).not.toThrow();
+    expect(() => renderApp()).not.toThrow();
 });
 
 // Test 2 - ReactRoutes renders inside HashRouter
 it('renders ReactRoutes inside HashRouter', () => {
     // Verifies that the routing layer is mounted correctly
     // and all gSender pages are accessible via routes
-    render(<App />);
+    renderApp();
     expect(screen.getByTestId('react-routes')).toBeInTheDocument();
 });
 
@@ -74,7 +96,7 @@ it('renders ReactRoutes inside HashRouter', () => {
 it('retrieves saved session token from store on startup', () => {
     // Verifies that store.get is called with session.token
     // when gSender first launches to check for existing CNC session
-    render(<App />);
+    renderApp();
     expect(store.get).toHaveBeenCalledWith('session.token');
 });
 
@@ -82,7 +104,7 @@ it('retrieves saved session token from store on startup', () => {
 it('validates saved session token on startup', async () => {
     // Verifies that user.signin is called with the retrieved token
     // to check whether the previous CNC session is still valid
-    render(<App />);
+    renderApp();
     await waitFor(() => {
         expect(user.signin).toHaveBeenCalledWith({ token: '' });
     });
@@ -92,7 +114,7 @@ it('validates saved session token on startup', async () => {
 it('starts Redux sagas on app startup', () => {
     // Verifies that sagaMiddleware.run is called with rootSaga
     // so all background Redux tasks are running when gSender loads
-    render(<App />);
+    renderApp();
     expect(sagaModule.sagaMiddleware.run).toHaveBeenCalledWith(
         sagaModule.default
     );
