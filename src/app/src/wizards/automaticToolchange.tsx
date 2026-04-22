@@ -155,6 +155,7 @@ const createWizard = (count: number) => {
                 '%global.toolchange.ZPOS=posz',
                 'G91 G21',
                 'G53 G0 Z[global.toolchange.Z_SAFE_HEIGHT]',
+                'G53 G0 X[global.toolchange.PROBE_POS_X] Y[global.toolchange.PROBE_POS_Y]',
                 '(Toolchange initiated)',
             ]);
         },
