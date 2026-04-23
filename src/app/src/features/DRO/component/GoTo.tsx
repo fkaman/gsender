@@ -102,6 +102,7 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
     function goToLocation() {
         const code = [];
         const unitModal = units === METRIC_UNITS ? 'G21' : 'G20';
+        const originalZ = Number(get(controller, 'state.status.wpos.z', 0));
 
         const axisValues = [];
         axisValues.push(`X${movementPos.x}`);
@@ -151,10 +152,8 @@ export function GoTo({ units, wpos, disabled }: GotoProps) {
                 !homingEnabled &&
                 movementModal === 'G91'
             ) {
-                const zMove =
-                    Number(movementPos.z) + Number(retractHeight) * -1;
-                code.push(`G91 G0 Z${zMove}`);
-                code.push('G90');
+                const zMove = Number(movementPos.z) + Number(originalZ);
+                code.push(`G90 G0 Z${zMove}`); // go to the absolute position of where the previous Z pos was + the incremental move
             } else {
                 code.push(movementModal, `G0 Z${movementPos.z}`);
             }
