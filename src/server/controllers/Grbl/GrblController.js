@@ -478,7 +478,6 @@ class GrblController {
                         log.debug(`M1 Program Pause: line=${sent + 1}, sent=${sent}, received=${received}`);
                         this.workflow.pause({ data: 'M1', comment: commentString });
                         line = line.replace(/M0*1(?!\d)/i, '(M1)');
->>>>>>> 8dd5676ad (WIP - brute force solution)
                     }
                 }
 
