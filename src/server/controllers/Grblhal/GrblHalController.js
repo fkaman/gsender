@@ -1733,7 +1733,7 @@ class GrblHalController {
                 // Insert dwell for firmware < ATCI_SUPPORTED_VERSION where $392 is not acted on by firmware
                 const semver = this.runner.settings?.version?.semver ?? 0;
                 const spindleOnDelay = Number(_.get(this.settings, ['settings', '$392'], 0));
-
+                console.log('Spindle delay: ', spindleOnDelay);
                 if (semver < ATCI_SUPPORTED_VERSION && spindleOnDelay > 0) {
                     gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${spindleOnDelay}`);
                 }
