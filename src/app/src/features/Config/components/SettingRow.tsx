@@ -159,6 +159,9 @@ export const SettingRow = React.memo(function SettingRow({
     if (setting && setting.hidden) {
         isHidden = setting.hidden(getPendingOrStore);
     }
+    if (setting.hideWhenFirmwareCurrent && isFirmwareCurrent) {
+        isHidden = true;
+    }
 
     const handleSettingsChange = (index: number) => (value: any) => {
         setSettingsAreDirty(true);
@@ -253,6 +256,9 @@ export const SettingRow = React.memo(function SettingRow({
         (setting.type === 'eeprom' ||
             (setting.type === 'hybrid' && hybridShouldUseEEPROM))
     ) {
+        if (isHidden) {
+            return <></>;
+        }
         let idToUse = setting.eID;
         if (Object.hasOwn(setting, 'remap') && isFirmwareCurrent) {
             idToUse = setting.remap;

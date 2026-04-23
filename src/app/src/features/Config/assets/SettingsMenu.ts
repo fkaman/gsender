@@ -127,6 +127,7 @@ export interface gSenderSetting {
     remap?: EEPROM;
     remapped?: boolean;
     forceEEPROM?: boolean;
+    hideWhenFirmwareCurrent?: boolean;
 }
 
 export interface gSenderSubSection {
@@ -1362,6 +1363,7 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         type: 'hybrid',
                         eID: '$392',
                         unit: 's',
+                        hideWhenFirmwareCurrent: true,
                     },
 
                     {
