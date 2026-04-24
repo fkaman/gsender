@@ -32,7 +32,7 @@ export default class Generator {
     /**
      * Main function to generate gcode
      */
-    generate = () => {
+    generate = ({ returnArray = false } = {}) => {
         const defaultSurfacingState = get(
             defaultState,
             'workspace.widgets.surfacing',
@@ -100,6 +100,10 @@ export default class Generator {
             ...dwell,
             '(End of Footer)',
         );
+
+        if (returnArray) {
+            return gcodeArr;
+        }
 
         //Convert to string for interpretation
         const gcodeArrStr = gcodeArr.join('\n');
