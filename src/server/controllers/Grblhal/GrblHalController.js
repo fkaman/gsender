@@ -64,7 +64,8 @@ import {
     GRBL_HAL_ACTIVE_STATE_IDLE,
     GRBL_HAL_ACTIVE_STATE_CHECK,
     GRBL_HAL_ACTIVE_STATE_RUN,
-    GRBL_HAL_ACTIVE_STATE_ALARM
+    GRBL_HAL_ACTIVE_STATE_ALARM,
+    ATCI_SUPPORTED_VERSION,
 } from './constants';
 import {
     METRIC_UNITS,
@@ -1729,13 +1730,13 @@ class GrblHalController {
                 // This is the fastest way to do it without having to check the status reports.
                 //const dwell = '%wait ; Wait for the planner to empty';
 
-                // add delay to spindle startup if enabled
-                //const preferences = store.get('preferences', {});
-                /*const delay = _.get(preferences, 'spindleDelay', 0);
-
-                if (Number(delay)) {
-                    gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${delay}`);
-                }*/
+                // Insert dwell for firmware < ATCI_SUPPORTED_VERSION where $392 is not acted on by firmware
+                const semver = this.runner.settings?.version?.semver ?? 0;
+                const spindleOnDelay = Number(_.get(this.settings, ['settings', '$392'], 0));
+                console.log('Spindle delay: ', spindleOnDelay);
+                if (semver < ATCI_SUPPORTED_VERSION && spindleOnDelay > 0) {
+                    gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${spindleOnDelay}`);
+                }
                 this.toolChangeContext.mappings = {};
                 const ok = this.sender.load(name, gcode + '\n', context);
                 if (!ok) {
