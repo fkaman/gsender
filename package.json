@@ -163,7 +163,8 @@
       "target": [
         "nsis"
       ],
-      "icon": "electron-build/icon.ico"
+      "icon": "electron-build/icon.ico",
+      "customSign": "./WindowsSigner.js"
     },
     "linux": {
       "category": "Utility",

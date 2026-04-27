@@ -1,31 +1,33 @@
 const { execSync } = require('child_process');
 
-
 /**
- * Custom signing utility
- * Required environment variables:
- *      KEYPAIR_ALIAS - KSP keypair from Digicert
- * @param config
- * @returns {Promise<void>}
+ * Custom signing utility for DigiCert KeyLocker (KSP).
+ * Required environment variables (set only on release tag builds in CI):
+ *   SM_KEYPAIR_ALIAS       - DigiCert KeyLocker keypair alias
+ *   SM_CLIENT_CERT_FILE    - Path to client auth .p12 (written to disk by CI)
  */
-
-
 // eslint-disable-next-line require-await
 exports.default = async (config) => {
-    const keypairAlias = 'key_612024263';
-    const path = config.path ? String(config.path) : '';
+    const keypairAlias = process.env.SM_KEYPAIR_ALIAS;
+    const clientCert = process.env.SM_CLIENT_CERT_FILE;
+    const filePath = config.path ? String(config.path) : '';
 
-    if (process.platform !== 'win32' || !keypairAlias || !path) {
-        throw new Error('Either win32, no keypair or path not found');
+    // Skip silently on non-signing builds (branch builds, dev machines without SM vars)
+    if (!keypairAlias || !clientCert) {
+        console.log('WindowsSigner: SM_KEYPAIR_ALIAS or SM_CLIENT_CERT_FILE not set — skipping signing');
+        return;
     }
 
-    const output = execSync(
-        `smctl sign --keypair-alias=${keypairAlias} --certificate="C:/Certs/sienci.p12" --input="${path}" --verbose`,
-    )
-        .toString()
-        .trim();
+    if (process.platform !== 'win32' || !filePath) {
+        throw new Error('customSign: must run on win32 with a valid path');
+    }
 
-    if (!output.includes('Done Adding Additional Store')) {
-        throw new Error(`Failed to sign executable: ${output}`);
+    try {
+        execSync(
+            `smctl sign --keypair-alias="${keypairAlias}" --input="${filePath}" --verbose`,
+            { stdio: 'inherit' }
+        );
+    } catch (err) {
+        throw new Error(`Failed to sign executable: ${err.message}`);
     }
 };
