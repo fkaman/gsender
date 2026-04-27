@@ -143,30 +143,16 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup and build
         uses: ./.github/actions/setup-build
-      - name: Set up DigiCert KeyLocker Tools
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://pki-downloads.digicert.com/stm/latest/Keylockertools-windows-x64.msi" -OutFile keylockertools.msi
-          msiexec /i keylockertools.msi /quiet /qn
-          $smctl = Get-ChildItem -Path "C:\Program Files" -Recurse -Filter "smctl.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $smctl) { $smctl = Get-ChildItem -Path "C:\Program Files (x86)" -Recurse -Filter "smctl.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 }
-          if (-not $smctl) { throw "smctl.exe not found after KeyLocker tools install" }
-          $klPath = $smctl.DirectoryName
-          echo "KeyLocker tools installed to: $klPath"
-          echo $klPath | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-          Set-Content -Path "C:\Windows\System32\pkcs11properties.cfg" -Value "curl_path=$klPath"
-          if (Test-Path "$klPath\smksp_registrar.exe") { & "$klPath\smksp_registrar.exe" list }
       - name: Write client auth certificate
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
           $b64 = "${{ secrets.SM_CLIENT_CERT_FILE_BASE64 }}" -replace '\s', ''
           $certBytes = [Convert]::FromBase64String($b64)
-          $certPath  = Join-Path $env:RUNNER_TEMP "sm_client_cert.p12"
+          $certPath = "${{ github.workspace }}\sm_client_cert.p12"
           [IO.File]::WriteAllBytes($certPath, $certBytes)
           echo "SM_CLIENT_CERT_FILE=$certPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-      - name: Sync DigiCert certificates
+      - name: Set up DigiCert SM Tools
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         env:
@@ -174,12 +160,19 @@ jobs:
           SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
           SM_HOST: ${{ secrets.SM_HOST }}
         run: |
-          [System.Environment]::SetEnvironmentVariable("SM_API_KEY",              "${{ secrets.SM_API_KEY }}",              "Machine")
-          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_FILE",     $env:SM_CLIENT_CERT_FILE,                 "Machine")
-          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_PASSWORD", "${{ secrets.SM_CLIENT_CERT_PASSWORD }}", "Machine")
-          [System.Environment]::SetEnvironmentVariable("SM_HOST",                 "${{ secrets.SM_HOST }}",                 "Machine")
+          curl -X GET "https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download" `
+            -H "x-api-key:$env:SM_API_KEY" -o smtools.msi
+          msiexec /i smtools.msi /quiet /qn
+          $klPath = "C:\Program Files\DigiCert\DigiCert KeyLocker Tools"
+          echo $klPath | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          Set-Content -Path "C:\Windows\System32\pkcs11properties.cfg" -Value "curl_path=$klPath"
+          [System.Environment]::SetEnvironmentVariable("SM_API_KEY",              $env:SM_API_KEY,              "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_FILE",     $env:SM_CLIENT_CERT_FILE,     "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_PASSWORD", $env:SM_CLIENT_CERT_PASSWORD, "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_HOST",                 $env:SM_HOST,                 "Machine")
           smctl healthcheck
-          smctl windows certsync
+          smctl creds save $env:SM_API_KEY $env:SM_CLIENT_CERT_PASSWORD
+          smctl windows certsync --keypair-alias="${{ secrets.SM_KEYPAIR_ALIAS }}"
       - name: Add signtool to PATH
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
