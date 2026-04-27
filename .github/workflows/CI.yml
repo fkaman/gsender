@@ -166,7 +166,12 @@ jobs:
           SM_API_KEY: ${{ secrets.SM_API_KEY }}
           SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
           SM_HOST: ${{ secrets.SM_HOST }}
-        run: smctl windows certsync
+        run: |
+          [System.Environment]::SetEnvironmentVariable("SM_API_KEY",              "${{ secrets.SM_API_KEY }}",              "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_FILE",     $env:SM_CLIENT_CERT_FILE,                 "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_PASSWORD", "${{ secrets.SM_CLIENT_CERT_PASSWORD }}", "Machine")
+          [System.Environment]::SetEnvironmentVariable("SM_HOST",                 "${{ secrets.SM_HOST }}",                 "Machine")
+          smctl windows certsync
       - name: Add signtool to PATH
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
