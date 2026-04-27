@@ -160,9 +160,13 @@ jobs:
         run: |
           curl -X GET "https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download" `
             -H "x-api-key:$env:SM_API_KEY" -o smtools.msi
-          msiexec /i smtools.msi /quiet /qn
+          $msiPath = (Resolve-Path smtools.msi).Path
+          Write-Host "MSI size: $((Get-Item $msiPath).Length) bytes"
+          msiexec /i $msiPath /quiet /qn
+          Write-Host "--- Program Files after install ---"
+          Get-ChildItem "C:\Program Files" -Directory | Select-Object -ExpandProperty Name
           $smctl = Get-ChildItem "C:\Program Files", "C:\Program Files (x86)" -Recurse -Filter "smctl.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $smctl) { throw "smctl.exe not found — install paths searched: C:\Program Files, C:\Program Files (x86)" }
+          if (-not $smctl) { throw "smctl.exe not found after install" }
           $klPath = $smctl.DirectoryName
           Write-Host "smctl found at: $klPath"
           echo $klPath | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
