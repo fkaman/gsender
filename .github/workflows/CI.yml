@@ -141,8 +141,6 @@ jobs:
         run: choco install -y vcredist2017
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Setup and build
-        uses: ./.github/actions/setup-build
       - name: Write client auth certificate
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
@@ -183,6 +181,8 @@ jobs:
             Select-Object -First 1
           if (-not $signtool) { throw "signtool.exe not found in Windows SDK" }
           $signtool.DirectoryName | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+      - name: Setup and build
+        uses: ./.github/actions/setup-build
       - name: Build Windows binaries
         env:
           SM_API_KEY: ${{ startsWith(github.ref, 'refs/tags/') && secrets.SM_API_KEY || '' }}
