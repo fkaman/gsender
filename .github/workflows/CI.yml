@@ -161,16 +161,19 @@ jobs:
           curl -X GET "https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download" `
             -H "x-api-key:$env:SM_API_KEY" -o smtools.msi
           msiexec /i smtools.msi /quiet /qn
-          $klPath = "C:\Program Files\DigiCert\DigiCert KeyLocker Tools"
+          $smctl = Get-ChildItem "C:\Program Files", "C:\Program Files (x86)" -Recurse -Filter "smctl.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $smctl) { throw "smctl.exe not found — install paths searched: C:\Program Files, C:\Program Files (x86)" }
+          $klPath = $smctl.DirectoryName
+          Write-Host "smctl found at: $klPath"
           echo $klPath | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
           Set-Content -Path "C:\Windows\System32\pkcs11properties.cfg" -Value "curl_path=$klPath"
           [System.Environment]::SetEnvironmentVariable("SM_API_KEY",              $env:SM_API_KEY,              "Machine")
           [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_FILE",     $env:SM_CLIENT_CERT_FILE,     "Machine")
           [System.Environment]::SetEnvironmentVariable("SM_CLIENT_CERT_PASSWORD", $env:SM_CLIENT_CERT_PASSWORD, "Machine")
           [System.Environment]::SetEnvironmentVariable("SM_HOST",                 $env:SM_HOST,                 "Machine")
-          & "$klPath\smctl.exe" healthcheck
-          & "$klPath\smctl.exe" creds save $env:SM_API_KEY $env:SM_CLIENT_CERT_PASSWORD
-          & "$klPath\smctl.exe" windows certsync --keypair-alias="${{ secrets.SM_KEYPAIR_ALIAS }}"
+          & $smctl.FullName healthcheck
+          & $smctl.FullName creds save $env:SM_API_KEY $env:SM_CLIENT_CERT_PASSWORD
+          & $smctl.FullName windows certsync --keypair-alias="${{ secrets.SM_KEYPAIR_ALIAS }}"
       - name: Add signtool to PATH
         if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
         shell: pwsh
