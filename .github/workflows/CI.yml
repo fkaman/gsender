@@ -154,7 +154,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
-          $certBytes = [Convert]::FromBase64String("${{ secrets.SM_CLIENT_CERT_FILE_BASE64 }}")
+          $b64 = "${{ secrets.SM_CLIENT_CERT_FILE_BASE64 }}" -replace '\s', ''
+          $certBytes = [Convert]::FromBase64String($b64)
           $certPath  = Join-Path $env:RUNNER_TEMP "sm_client_cert.p12"
           [IO.File]::WriteAllBytes($certPath, $certBytes)
           echo "SM_CLIENT_CERT_FILE=$certPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
