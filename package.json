@@ -159,12 +159,12 @@
         }
       ]
     },
+    "customSign": "./WindowsSigner.js",
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "electron-build/icon.ico",
-      "customSign": "./WindowsSigner.js"
+      "icon": "electron-build/icon.ico"
     },
     "linux": {
       "category": "Utility",

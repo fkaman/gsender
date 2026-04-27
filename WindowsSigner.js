@@ -8,6 +8,10 @@ const { execSync } = require('child_process');
  */
 // eslint-disable-next-line require-await
 exports.default = async (config) => {
+    if (process.platform !== 'win32') {
+        return;
+    }
+
     const keypairAlias = process.env.SM_KEYPAIR_ALIAS;
     const clientCert = process.env.SM_CLIENT_CERT_FILE;
     const filePath = config.path ? String(config.path) : '';
@@ -18,8 +22,8 @@ exports.default = async (config) => {
         return;
     }
 
-    if (process.platform !== 'win32' || !filePath) {
-        throw new Error('customSign: must run on win32 with a valid path');
+    if (!filePath) {
+        throw new Error('customSign: no file path provided');
     }
 
     try {
