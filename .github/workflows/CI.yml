@@ -61,7 +61,7 @@ jobs:
           fi
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: releases/linux/*
           prerelease: true
@@ -117,7 +117,7 @@ jobs:
           fi
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: releases/macos/*
           prerelease: true
@@ -142,7 +142,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Write client auth certificate
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
           $b64 = "${{ secrets.SM_CLIENT_CERT_FILE_BASE64 }}" -replace '\s', ''
@@ -151,7 +151,7 @@ jobs:
           [IO.File]::WriteAllBytes($certPath, $certBytes)
           echo "SM_CLIENT_CERT_FILE=$certPath" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
       - name: Set up DigiCert SM Tools
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         env:
           SM_API_KEY: ${{ secrets.SM_API_KEY }}
@@ -177,7 +177,7 @@ jobs:
           & $smctl.FullName creds save $env:SM_API_KEY $env:SM_CLIENT_CERT_PASSWORD
           & $smctl.FullName windows certsync --keypair-alias="${{ secrets.SM_KEYPAIR_ALIAS }}"
       - name: Add signtool to PATH
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
           $signtool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter "signtool.exe" |
@@ -190,10 +190,10 @@ jobs:
         uses: ./.github/actions/setup-build
       - name: Build Windows binaries
         env:
-          SM_API_KEY: ${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/') && secrets.SM_API_KEY || '' }}
-          SM_CLIENT_CERT_PASSWORD: ${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/') && secrets.SM_CLIENT_CERT_PASSWORD || '' }}
-          SM_HOST: ${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/') && secrets.SM_HOST || '' }}
-          SM_KEYPAIR_ALIAS: ${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/') && secrets.SM_KEYPAIR_ALIAS || '' }}
+          SM_API_KEY: ${{ startsWith(github.ref, 'refs/tags/') && secrets.SM_API_KEY || '' }}
+          SM_CLIENT_CERT_PASSWORD: ${{ startsWith(github.ref, 'refs/tags/') && secrets.SM_CLIENT_CERT_PASSWORD || '' }}
+          SM_HOST: ${{ startsWith(github.ref, 'refs/tags/') && secrets.SM_HOST || '' }}
+          SM_KEYPAIR_ALIAS: ${{ startsWith(github.ref, 'refs/tags/') && secrets.SM_KEYPAIR_ALIAS || '' }}
         run: yarn run build:windows
       - name: Prepare release assets
         shell: bash
@@ -222,7 +222,7 @@ jobs:
           fi
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: releases/windows/*
           prerelease: true
@@ -252,7 +252,7 @@ jobs:
           scripts/build-pi.sh
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/features/')
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             releases/pi/*
