@@ -30,7 +30,7 @@ describe('Surfacing Output', () => {
     it('should output the correct gcode for the surfacing', () => {
         const gcodeGenerator = new Generator({
             surfacing: defaultState.widgets.surfacing,
-            units: 'mm',
+            units: METRIC_UNITS,
         });
 
         const gcode = gcodeGenerator.generate({ returnArray: true });
