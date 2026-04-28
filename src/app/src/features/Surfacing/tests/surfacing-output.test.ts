@@ -1,5 +1,6 @@
 import defaultState from 'app/store/defaultState';
 import Generator from '../utils/surfacingGcodeGenerator';
+import { IMPERIAL_UNITS, METRIC_UNITS } from 'app/constants';
 
 describe('Surfacing Output', () => {
     it('should generate gcode for surfacing', () => {
@@ -10,18 +11,18 @@ describe('Surfacing Output', () => {
         const gcode = gcodeGenerator.generate();
         expect(gcode).toBeDefined();
     });
-    it('should generate gcode for surfacing with different units', () => {
+    it('should generate gcode for surfacing with imperial units', () => {
         const gcodeGenerator = new Generator({
             surfacing: defaultState.widgets.surfacing,
-            units: 'inches',
+            units: IMPERIAL_UNITS,
         });
         const gcode = gcodeGenerator.generate();
         expect(gcode).toMatch(/G20/);
     });
-    it('should generate gcode for surfacing with different units', () => {
+    it('should generate gcode for surfacing with metric units', () => {
         const gcodeGenerator = new Generator({
             surfacing: defaultState.widgets.surfacing,
-            units: 'mm',
+            units: METRIC_UNITS,
         });
         const gcode = gcodeGenerator.generate();
         expect(gcode).toMatch(/G21/);
