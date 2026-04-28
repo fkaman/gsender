@@ -64,7 +64,9 @@ interface iSettingsContext {
     getEEPROMDefaultValue: (v: EEPROM) => string | number;
     isFirmwareCurrent: boolean;
     profileChangedSinceDefaults: boolean;
-    setProfileChangedSinceDefaults?: React.Dispatch<React.SetStateAction<boolean>>;
+    setProfileChangedSinceDefaults?: React.Dispatch<
+        React.SetStateAction<boolean>
+    >;
 }
 
 interface SettingsProviderProps {
@@ -152,6 +154,7 @@ function populateSettingsValues(
                     o.value = store.get(o.key);
                     o.globalIndex = index;
                     o.defaultValue = fetchDefaultValue(o.key);
+                    o.onChange && o.onChange();
                     globalValueReference.push({ ...o });
                     index++;
                 }
@@ -232,7 +235,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
     const [settingsValues, setSettingsValues] = useState<gSenderSetting[]>([]);
     const [filterNonDefault, setFilterNonDefault] = useState(false);
     const [isFirmwareCurrent, setIsFirmwareCurrent] = useState(false);
-    const [profileChangedSinceDefaults, setProfileChangedSinceDefaults] = useState(false);
+    const [profileChangedSinceDefaults, setProfileChangedSinceDefaults] =
+        useState(false);
 
     const firmwareVersion = useTypedSelector(
         (state: RootState) => state.controller.settings.version?.semver,

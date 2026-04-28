@@ -278,10 +278,7 @@ export const ReactRoutes = () => {
                     element={
                         <div className="flex flex-col justify-center gap-8 p-4">
                             <div>
-                                <MachineInfoDisplay
-                                    pinned
-                                    setPinned={noop}
-                                />
+                                <MachineInfoDisplay pinned setPinned={noop} />
                             </div>
 
                             <div>
@@ -298,7 +295,7 @@ export const ReactRoutes = () => {
                                 <Probe />
                             </RemoteWidget>
                             <RemoteWidget label="Macros">
-                                <Macros />
+                                <Macros isRemote />
                             </RemoteWidget>
                             <RemoteWidget label="Spindle">
                                 <Spindle />

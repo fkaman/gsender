@@ -113,7 +113,7 @@ class GrblController {
         },
         close: (err) => {
             this.ready = false;
-            const received = this.sender?.state?.received;
+            const currentLineRunning = this.sender?.state?.totalSentToQueue - this.sender?.state?.countdownQueue.length;
             if (err) {
                 log.warn(`Disconnected from serial port "${this.options.port}":`, err);
             }
@@ -125,7 +125,7 @@ class GrblController {
 
                 // Destroy controller
                 this.destroy();
-            }, received);
+            }, currentLineRunning);
         },
         error: (err) => {
             this.ready = false;
@@ -206,6 +206,8 @@ class GrblController {
     homingStarted = false;
 
     homingFlagSet = false;
+
+    hasHomedSet = false;
 
     // eslint-disable-next-line max-lines-per-function
     constructor(engine, connection, options) {
@@ -477,6 +479,7 @@ class GrblController {
                     } else if (programMode === 'M1') {
                         log.debug(`M1 Program Pause: line=${sent + 1}, sent=${sent}, received=${received}`);
                         this.workflow.pause({ data: 'M1', comment: commentString });
+                        this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`, { ignoreEvent: false });
                         line = line.replace(/M0*1(?!\d)/i, '(M1)');
                     }
                 }
@@ -664,6 +667,10 @@ class GrblController {
                 this.homingFlagSet = determineMachineZeroFlagSet(res, this.settings);
                 this.emit('homing:flag', this.homingFlagSet);
                 this.homingStarted = false;
+                if (!this.hasHomedSet) {
+                    this.hasHomedSet = true;
+                    this.emit('homing:has-homed', true);
+                }
             }
 
             this.actionMask.queryStatusReport = false;
@@ -1322,7 +1329,7 @@ class GrblController {
         }, 500);
     }
 
-    close(callback, received) {
+    close(callback, currentLineRunning) {
         const { port } = this.options;
 
         // Assertion check
@@ -1341,7 +1348,7 @@ class GrblController {
         this.emit('serialport:closeController', {
             port: port,
             inuse: false,
-        }, received);
+        }, currentLineRunning);
 
         if (this.isClose()) {
             callback(null);
@@ -1398,6 +1405,7 @@ class GrblController {
             // workflow state
             socket.emit('workflow:state', this.workflow.state);
         }
+        socket.emit('homing:has-homed', this.hasHomedSet);
     }
 
     emit(eventName, ...args) {
@@ -1840,11 +1848,15 @@ class GrblController {
                 }
             },
             'lasertest:on': () => {
-                const [power = 0, duration = 0, maxS = 1000] = args;
+                const [power = 0, duration = 0] = args;
+
+                const maxS = ensurePositiveNumber(this.runner.getSetting('$30', 255));
+                const laserPower = ensurePositiveNumber(maxS * (power / 100)).toFixed(2);
+
                 const commands = [
                     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Laser-Mode
                     // The laser will only turn on when Grbl is in a G1, G2, or G3 motion mode.
-                    'G1F1 M3 S' + ensurePositiveNumber(maxS * (power / 100))
+                    'G1F1 M3 S' + laserPower
                 ];
                 if (duration > 0) {
                     commands.push('G4P' + ensurePositiveNumber(duration));

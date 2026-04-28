@@ -48,6 +48,7 @@ export interface Workspace {
     promptExit: boolean;
     backupFreq: BackupFrequencies;
     lastBackupTime: number;
+    powerSaving: boolean;
     park: object;
     jobTimes: number[];
     toolChange: {

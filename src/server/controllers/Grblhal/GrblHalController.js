@@ -64,7 +64,8 @@ import {
     GRBL_HAL_ACTIVE_STATE_IDLE,
     GRBL_HAL_ACTIVE_STATE_CHECK,
     GRBL_HAL_ACTIVE_STATE_RUN,
-    GRBL_HAL_ACTIVE_STATE_ALARM
+    GRBL_HAL_ACTIVE_STATE_ALARM,
+    ATCI_SUPPORTED_VERSION,
 } from './constants';
 import {
     METRIC_UNITS,
@@ -118,7 +119,7 @@ class GrblHalController {
         },
         close: (err) => {
             this.ready = false;
-            const received = this.sender?.state?.received;
+            const currentLineRunning = this.sender?.state?.totalSentToQueue - this.sender?.state?.countdownQueue.length;
             if (err) {
                 log.warn(`Disconnected from serial port "${this.options.port}":`, err);
             }
@@ -130,7 +131,7 @@ class GrblHalController {
 
                 // Destroy controller
                 this.destroy();
-            }, received);
+            }, currentLineRunning);
         },
         error: (err) => {
             this.ready = false;
@@ -500,7 +501,7 @@ class GrblHalController {
                     } else if (programMode === 'M1') {
                         log.debug(`M1 Program Pause: line=${sent + 1}, sent=${sent}, received=${received}`);
                         this.workflow.pause({ data: 'M1', comment: commentString });
-                        this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`);
+                        this.command('gcode', `${WAIT}\n${PAUSE_START} ;${commentString}`, { ignoreEvent: false });
                         line = line.replace(/M0*1(?!\d)/i, '(M1)');
                     }
                 }
@@ -1583,7 +1584,7 @@ class GrblHalController {
         }, 500);
     }
 
-    close(callback, received) {
+    close(callback, currentLineRunning) {
         const { port } = this.options;
 
         // Assertion check
@@ -1608,7 +1609,7 @@ class GrblHalController {
         this.emit('serialport:closeController', {
             port: port,
             inuse: false,
-        }, received);
+        }, currentLineRunning);
 
         if (this.isClose()) {
             callback(null);
@@ -1729,14 +1730,14 @@ class GrblHalController {
                 // This is the fastest way to do it without having to check the status reports.
                 //const dwell = '%wait ; Wait for the planner to empty';
 
-                // add delay to spindle startup if enabled
-                //const preferences = store.get('preferences', {});
-                /*const delay = _.get(preferences, 'spindleDelay', 0);
-
-                if (Number(delay)) {
-                    gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${delay}`);
-                }*/
-
+                // Insert dwell for firmware < ATCI_SUPPORTED_VERSION where $392 is not acted on by firmware
+                const semver = this.runner.settings?.version?.semver ?? 0;
+                const spindleOnDelay = Number(_.get(this.settings, ['settings', '$392'], 0));
+                console.log('Spindle delay: ', spindleOnDelay);
+                if (semver < ATCI_SUPPORTED_VERSION && spindleOnDelay > 0) {
+                    gcode = gcode.replace(/\b(?:S\d* ?M[34]|M[34] ?S\d*)\b(?! ?G4 ?P?\b)/g, `$& G4 P${spindleOnDelay}`);
+                }
+                this.toolChangeContext.mappings = {};
                 const ok = this.sender.load(name, gcode + '\n', context);
                 if (!ok) {
                     callback(new Error(`Invalid G-code: name=${name}`));
@@ -2142,11 +2143,14 @@ class GrblHalController {
                 }
             },
             'lasertest:on': () => {
-                const [power = 0, duration = 0, maxS = 1000] = args;
+                const [power = 0, duration = 0] = args;
+
+                const maxS = ensurePositiveNumber(this.runner.getSetting('$730', 255));
+                const laserPower = ensurePositiveNumber(maxS * (power / 100)).toFixed(2);
                 const commands = [
                     // https://github.com/gnea/grbl/wiki/Grbl-v1.1-Laser-Mode
                     // The laser will only turn on when Grbl is in a G1, G2, or G3 motion mode.
-                    'G1F1 M3 S' + ensurePositiveNumber(maxS * (power / 100))
+                    'G1F1 M3 S' + laserPower
                 ];
                 if (duration > 0) {
                     commands.push('G4P' + ensurePositiveNumber(duration));
@@ -2399,7 +2403,6 @@ class GrblHalController {
                 const [context] = args;
                 console.log(context);
                 this.toolChangeContext = { ...this.toolChangeContext, ...context };
-                console.log(this.toolChangeContext);
             },
             'toolchange:pre': () => {
                 log.debug('Starting pre hook');

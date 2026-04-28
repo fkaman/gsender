@@ -49,7 +49,7 @@ interface Props {
  *
  */
 const ProgressArea: React.FC<Props> = ({ senderStatus, workflowState }) => {
-    const { total, received, elapsedTime, remainingTime, startTime } =
+    const { total, currentLineRunning, elapsedTime, remainingTime, startTime } =
         senderStatus || {};
 
     const getFinishTime = (givenTime: number): string => {
@@ -109,9 +109,9 @@ const ProgressArea: React.FC<Props> = ({ senderStatus, workflowState }) => {
         );
     };
 
-    const percentageValue = Number.isNaN((received / total) * 100)
+    const percentageValue = Number.isNaN((currentLineRunning / total) * 100)
         ? 0
-        : (received / total) * 100;
+        : (currentLineRunning / total) * 100;
 
     const timeSplit = convertSecondsToDHMS(Number(remainingTime));
     const timeComponent = getTimesHTML(timeSplit);
@@ -168,7 +168,7 @@ const ProgressArea: React.FC<Props> = ({ senderStatus, workflowState }) => {
                 </TooltipProvider>
             </div>
             <div className="w-full flex flex-row justify-between gap-2 text-gray-400 text-sm whitespace-nowrap">
-                <span>{`${received} / ${total} Lines`}</span>
+                <span>{`${currentLineRunning} / ${total} Lines`}</span>
                 <span>
                     {convertMillisecondsToTimeStamp(elapsedTime, true)} cutting
                 </span>

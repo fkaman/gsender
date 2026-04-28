@@ -149,6 +149,9 @@ const ProbeWidget = () => {
     const [useSafeProbeOption, setUseSafeProbeOption] =
         useState<boolean>(false);
     const [selectedProbeCommand, setSelectedProbeCommand] = useState<number>(0);
+    const [touchplateTypeSwitcher, setTouchplateTypeSwitcher] = useState<boolean>(
+        config.get('touchplateTypeSwitcher')
+    );
     const [connectivityTest, setConnectivityTest] = useState<boolean>(
         config.get('connectivityTest'),
     );
@@ -252,6 +255,9 @@ const ProbeWidget = () => {
         },
         changeProbeCommand: (value: string): void => {
             setProbeCommand(value);
+        },
+        changeTouchPlateType: (value: TOUCHPLATE_TYPES_T): void => {
+            store.set('workspace.probeProfile.touchplateType', value);
         },
         toggleUseTLO: (): void => {
             setUseTLO(!useTLO);
@@ -567,6 +573,7 @@ const ProbeWidget = () => {
                 store.get('workspace.probeProfile.touchplateType'),
             );
             setTouchplate(store.get('workspace.probeProfile', {}));
+            setTouchplateTypeSwitcher(config.get('touchplateTypeSwitcher'));
             setProbeCommand(config.get('probeCommand', 'G38.2'));
             setUseTLO(config.get('useTLO'));
             setProbeDepth(config.get('probeDepth') || {});
@@ -599,6 +606,7 @@ const ProbeWidget = () => {
         availableProbeCommands: availableProbeCommands,
         selectedProbeCommand: selectedProbeCommand,
         touchplate: touchplate,
+        touchplateTypeSwitcher: touchplateTypeSwitcher,
         toolDiameter: toolDiameter,
         availableTools: availableTools,
         units: units,

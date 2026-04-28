@@ -38,10 +38,10 @@ import {
     LIGHTWEIGHT_OPTIONS,
     OUTLINE_MODES,
     SPINDLE_MODE,
+    THEMES,
     WORKSPACE_MODE,
 } from 'app/constants';
 import { LaserWizard } from 'app/features/Config/components/wizards/LaserWizard.tsx';
-import { ATCIWizard } from 'app/features/Config/components/wizards/ATCiWizard.tsx';
 import {
     GamepadLinkWizard,
     KeyboardLinkWizard,
@@ -69,6 +69,8 @@ import {
     TOASTER_UNTIL_CLOSE,
 } from 'app/lib/toaster/ToasterLib';
 import isElectron from 'is-electron';
+import { THEMES_T } from 'app/features/Visualizer/definitions';
+import { JSX } from 'react';
 
 export interface SettingsMenuSection {
     label: string;
@@ -118,11 +120,14 @@ export interface gSenderSetting {
     onDisable?: () => void;
     onEnable?: () => void;
     onUpdate?: () => void;
+    onApply?: () => void;
+    onChange?: (args?: any) => void;
     min?: number;
     max?: number;
     remap?: EEPROM;
     remapped?: boolean;
     forceEEPROM?: boolean;
+    hideWhenFirmwareCurrent?: boolean;
 }
 
 export interface gSenderSubSection {
@@ -245,6 +250,28 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         options: OUTLINE_MODES,
                     },
                     {
+                        label: 'Power Saving',
+                        key: 'workspace.powerSaving',
+                        type: 'boolean',
+                        description: 'Allow screen to blank/sleep.',
+                        onEnable: () => {
+                            if (isElectron()) {
+                                window.ipcRenderer.send(
+                                    'change-power-saving',
+                                    true,
+                                );
+                            }
+                        },
+                        onDisable: () => {
+                            if (isElectron()) {
+                                window.ipcRenderer.send(
+                                    'change-power-saving',
+                                    false,
+                                );
+                            }
+                        },
+                    },
+                    {
                         label: 'Prompt on exit',
                         key: 'workspace.promptExit',
                         type: 'boolean',
@@ -300,9 +327,9 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         description:
                             'Independant colour control for the visualizer.',
                         type: 'select',
-                        options: ['Light', 'Dark'],
-                        onUpdate: () => {
-                            pubsub.publish('theme:change');
+                        options: [THEMES.LIGHT_THEME, THEMES.DARK_THEME],
+                        onChange: (theme: THEMES_T) => {
+                            pubsub.publish('theme:change', theme);
                         },
                     },
                     {
@@ -601,6 +628,13 @@ export const SettingsMenu: SettingsMenuSection[] = [
                             TOUCHPLATE_TYPE_3D,
                             TOUCHPLATE_TYPE_BITZERO,
                         ],
+                    },
+                    {
+                        label: 'Show touch plate switcher',
+                        key: 'widgets.probe.touchplateTypeSwitcher',
+                        description:
+                            'Show a button on Probe tab to allow switching between touch plate types.',
+                        type: 'boolean',
                     },
                     {
                         label: 'Tip diameter',
@@ -1319,7 +1353,7 @@ export const SettingsMenu: SettingsMenuSection[] = [
                     },
                     {
                         type: 'eeprom',
-                        eID: '$394'
+                        eID: '$394',
                     },
                     {
                         label: 'Spindle on delay',
@@ -1329,6 +1363,7 @@ export const SettingsMenu: SettingsMenuSection[] = [
                         type: 'hybrid',
                         eID: '$392',
                         unit: 's',
+                        hideWhenFirmwareCurrent: true,
                     },
 
                     {

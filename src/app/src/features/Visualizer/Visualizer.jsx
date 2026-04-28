@@ -720,7 +720,12 @@ class Visualizer extends Component {
 
         // Dispose post-processing composers and renderer
         // (defensive cleanup — normally the component stays mounted via display:none)
-        [this.copyComposer, this.fxaaComposer, this.bloomComposer, this.finalComposer].forEach((composer) => {
+        [
+            this.copyComposer,
+            this.fxaaComposer,
+            this.bloomComposer,
+            this.finalComposer,
+        ].forEach((composer) => {
             if (composer) composer.dispose();
         });
         if (this.renderer) {
@@ -2125,7 +2130,9 @@ class Visualizer extends Component {
     // without recreating the renderer, camera, or controls. Ends with reloadGCode() to restore toolpath.
     rebuildSceneContents() {
         if (!this.scene || !this.renderer) {
-            console.warn('Visualizer: rebuildSceneContents called before scene/renderer ready');
+            console.warn(
+                'Visualizer: rebuildSceneContents called before scene/renderer ready',
+            );
             return;
         }
 

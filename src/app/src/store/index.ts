@@ -332,10 +332,9 @@ const migrateStore = (): void => {
     }
 
     if (semver.lt(cnc.version, '1.6.0')) {
-        const machineProfileID = Number(store.get(
-            'workspace.machineProfile.id',
-            4,
-        ));
+        const machineProfileID = Number(
+            store.get('workspace.machineProfile.id', 4),
+        );
 
         if (machineProfileID === 3) {
             // Set 2x4 (2)
@@ -345,7 +344,7 @@ const migrateStore = (): void => {
             if (defaultMachineProfile) {
                 store.set('workspace.machineProfile', defaultMachineProfile);
             }
-        }  else if (machineProfileID === 1) {
+        } else if (machineProfileID === 1) {
             // set 0 (4x4)
             const defaultMachineProfile = defaultMachineProfiles.find(
                 (profile) => profile.id === 0,
@@ -355,7 +354,6 @@ const migrateStore = (): void => {
             }
         }
     }
-
 
     if (semver.lt(cnc.version, '1.5.5')) {
         // if user has default retraction distance (4), change it to the new default (2)
@@ -739,6 +737,11 @@ try {
         window.ipcRenderer.send(
             'assignPromptExit',
             store.get('workspace.promptExit'),
+        );
+
+        window.ipcRenderer.send(
+            'change-power-saving',
+            store.get('workspace.powerSaving'),
         );
     }
 } catch (err) {
