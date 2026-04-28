@@ -161,12 +161,8 @@ jobs:
           curl -X GET "https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download" `
             -H "x-api-key:$env:SM_API_KEY" -o smtools.msi
           $msiPath = (Resolve-Path smtools.msi).Path
-          Write-Host "MSI size: $((Get-Item $msiPath).Length) bytes"
           $proc = Start-Process msiexec -ArgumentList "/i `"$msiPath`" /quiet /qn" -Wait -PassThru
-          Write-Host "msiexec exit code: $($proc.ExitCode)"
           if ($proc.ExitCode -ne 0) { throw "msiexec failed with exit code $($proc.ExitCode)" }
-          Write-Host "--- Program Files after install ---"
-          Get-ChildItem "C:\Program Files" -Directory | Select-Object -ExpandProperty Name
           $smctl = Get-ChildItem "C:\Program Files", "C:\Program Files (x86)" -Recurse -Filter "smctl.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $smctl) { throw "smctl.exe not found after install" }
           $klPath = $smctl.DirectoryName
