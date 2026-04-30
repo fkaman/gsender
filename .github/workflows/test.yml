@@ -3,7 +3,7 @@ name: Unit Tests
 on:
   pull_request:
     branches:
-      -test/ci-validation   # Add required branch here (dev/master)
+      -test/ci-validation
 
 jobs:
   test:
