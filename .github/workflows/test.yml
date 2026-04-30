@@ -2,8 +2,7 @@ name: Unit Tests
 
 on:
   pull_request:
-    branches:
-      -test/ci-validation
+    branches: ["test/ci-validation"]
 
 jobs:
   test:
