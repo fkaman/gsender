@@ -234,7 +234,6 @@ jobs:
           path: releases/windows/*.exe
           compression-level: 0 # no compression
           retention-days: 2
-
   build-pi:
     name: Build Raspberry PI packages
     runs-on: ubuntu-24.04-arm
