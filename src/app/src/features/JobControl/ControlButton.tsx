@@ -5,6 +5,7 @@ import pubsub from 'pubsub-js';
 import { PiPause } from 'react-icons/pi';
 import { FiOctagon } from 'react-icons/fi';
 import { IoPlayOutline } from 'react-icons/io5';
+import { usePostHog } from '@posthog/react';
 
 import useKeybinding from 'app/lib/useKeybinding';
 import useShuttleEvents from 'app/hooks/useShuttleEvents';
@@ -73,6 +74,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({
     onStop,
     validateATC,
 }) => {
+    const posthog = usePostHog();
     const [isRunningSDFile, setIsRunningSDFile] = useState<boolean>(false);
     // If we have a name, we a running a SD file - convert to boolean in following useEffect
     const sdRunReported = useTypedSelector(
@@ -303,6 +305,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({
             currentActiveState === GRBL_ACTIVE_STATE_HOLD
         ) {
             controller.command('gcode:resume');
+            posthog?.capture('job_resumed', { active_state: currentActiveState });
             return;
         }
 
@@ -316,16 +319,19 @@ const ControlButton: React.FC<ControlButtonProps> = ({
                 return;
             }
             controller.command('gcode:start');
+            posthog?.capture('job_started', { active_state: currentActiveState });
             return;
         }
     };
     const handlePause = (): void => {
         controller.command('gcode:pause');
+        posthog?.capture('job_paused');
     };
     const handleStop = (reduxActiveState?: GRBL_ACTIVE_STATES_T): void => {
         const currentActiveState = reduxActiveState || activeState;
         onStop();
         controller.command('gcode:stop', { force: true });
+        posthog?.capture('job_stopped', { active_state: currentActiveState });
         if (currentActiveState === GRBL_ACTIVE_STATE_CHECK) {
             controller.command('gcode', '$C');
         }

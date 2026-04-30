@@ -6,6 +6,7 @@ import isElectron from 'is-electron';
 import pubsub from 'pubsub-js';
 import debounce from 'lodash/debounce';
 import throttle from 'lodash/throttle';
+import { usePostHog } from '@posthog/react';
 
 import { Button } from 'app/components/Button';
 import { RootState, store as reduxStore } from 'app/store/redux';
@@ -51,6 +52,7 @@ import get from 'lodash/get';
 import { Tooltip } from 'app/components/Tooltip';
 
 const ButtonControlGroup = () => {
+    const posthog = usePostHog();
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.platform) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,6 +163,11 @@ const ButtonControlGroup = () => {
             controller.port,
             VISUALIZER_PRIMARY,
         );
+        posthog?.capture('file_loaded', {
+            file_name: file.name,
+            file_size_bytes: file.size,
+            source: 'file_picker',
+        });
     };
 
     const handleClickLoadFile = () => {
@@ -200,6 +207,7 @@ const ButtonControlGroup = () => {
             return;
         }
 
+        posthog?.capture('file_closed', { file_name: name });
         controller.command('gcode:unload');
         reduxStore.dispatch(unloadFileInfo());
         pubsub.publish('unload:file');
