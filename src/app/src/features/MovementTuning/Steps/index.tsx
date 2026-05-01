@@ -549,3 +549,4 @@ const Steps = () => {
 };
 
 export default Steps;
+export { calculateNewStepsPerMM } from '../utils';

@@ -23,6 +23,7 @@
 import get from 'lodash/get';
 import includes from 'lodash/includes';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePostHog } from '@posthog/react';
 // import Space from 'app/components/Space';
 import controller from 'app/lib/controller';
 import {
@@ -64,6 +65,7 @@ import { WidgetConfigProvider } from '../WidgetConfig/WidgetContextProvider';
 import { Workspace } from 'app/workspace/definitions';
 
 const ProbeWidget = () => {
+    const posthog = usePostHog();
     const {
         probePinStatus,
         distance,
@@ -382,6 +384,12 @@ const ProbeWidget = () => {
         },
         runProbeCommands: (commands: string[]): void => {
             controller.command('gcode:safe', commands, 'G21');
+            posthog?.capture('probe_run', {
+                probe_command_id: availableProbeCommands[selectedProbeCommand]?.id,
+                touchplate_type: touchplateType,
+                units,
+                firmware: type,
+            });
         },
         returnProbeConnectivity: (): boolean => {
             return probePinStatus;

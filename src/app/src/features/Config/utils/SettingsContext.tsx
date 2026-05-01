@@ -154,7 +154,6 @@ function populateSettingsValues(
                     o.value = store.get(o.key);
                     o.globalIndex = index;
                     o.defaultValue = fetchDefaultValue(o.key);
-                    o.onChange && o.onChange();
                     globalValueReference.push({ ...o });
                     index++;
                 }
@@ -503,10 +502,7 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
             // ***first, check conditions that are always applicable
 
             // Hide hidden when filtering
-            if (
-                'hidden' in v &&
-                (!searchTerm || searchTerm.trim().length === 0)
-            ) {
+            if ('hidden' in v && (!searchTerm || searchTerm.trim().length === 0)) {
                 if (v.hidden(getPendingOrStore)) {
                     // only return if it's supposed to be hidden, otherwise we have more to check
                     return false;
