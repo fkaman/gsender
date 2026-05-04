@@ -1,6 +1,6 @@
 {
   "name": "gSender",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Electron sender for GRBL based CNC machines",
   "author": {
     "name": "Sienci Labs <hi@sienci.com>",
@@ -93,7 +93,7 @@
     "check-types": "tsc --noEmit -p ./src/app/src",
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
-    "test:app": "yarn --cwd src/app test" 
+    "test:app": "yarn --cwd src/app test"
 
   },
   "build": {
